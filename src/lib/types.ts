@@ -20,6 +20,7 @@ export interface ItemView {
   status: DetectStatus;
   version?: string;
   detail?: string;
+  mirror_current?: string;
   needs_dir: boolean;
   has_verify: boolean;
   archive?: string;

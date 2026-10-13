@@ -76,13 +76,14 @@ impl VersionProvider for MinicondaProvider {
                     if !list.is_empty() {
                         return Ok(list);
                     }
-                    last_err = Some("列表为空".into());
+                    last_err = Some(crate::tr!("列表为空", "List is empty"));
                 }
                 Err(e) => last_err = Some(e.to_string()),
             }
         }
-        Err(ProviderError::Index(format!(
-            "Miniconda 版本列表获取失败（官方与清华镜像）：{}",
+        Err(ProviderError::Index(crate::tr!(
+            "Miniconda 版本列表获取失败（官方与清华镜像）：{0}",
+            "Failed to fetch the Miniconda version list (official and Tsinghua mirror): {0}",
             last_err.unwrap_or_default()
         )))
     }

@@ -69,7 +69,7 @@ async fn fetch_page(path: &str) -> Result<String, ProviderError> {
             Err(e) => last = Some(e.into()),
         }
     }
-    Err(last.unwrap_or(ProviderError::Index("PHP 列表地址为空".into())))
+    Err(last.unwrap_or(ProviderError::Index(crate::tr!("PHP 列表地址为空", "PHP list URL is empty"))))
 }
 
 #[async_trait::async_trait]
@@ -90,7 +90,7 @@ impl VersionProvider for PhpWindowsProvider {
         let list = merge_pages(&pages, prefer)?;
         // 列表页结构变化时宁可报错，也不要静默给出空列表
         if list.is_empty() {
-            return Err(ProviderError::Index("没有解析到可用的 PHP 版本".into()));
+            return Err(ProviderError::Index(crate::tr!("没有解析到可用的 PHP 版本", "No usable PHP version parsed")));
         }
         Ok(list)
     }

@@ -8,6 +8,16 @@ use std::time::Duration;
 
 const TAR_TIMEOUT: Duration = Duration::from_secs(60 * 30);
 
+/// 投放阶段。界面据此显示对应状态，避免依赖文案文本判断阶段。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DeployStage {
+    Prepare,
+    Extracting,
+    Moving,
+    Done,
+    Cleaned,
+}
+
 /// 安装目录所在卷的根，用于挑一个同卷的临时目录（同卷移动 = 重命名，瞬时完成）。
 /// 入参应为绝对路径；盘符相对路径（如 `D:foo`）产生的临时目录依赖进程 CWD，不受支持，
 /// 此时退回前缀本体（行为与原实现一致，调用方应始终传绝对路径）。
@@ -35,12 +45,12 @@ pub fn temp_dir_for(install_dir: &Path, item_id: &str) -> PathBuf {
 /// 用 `tar -tf` 列出条目，判断是否只有一个顶层目录（决定是否 `--strip-components=1`）。
 pub fn has_single_top_level(archive: &Path) -> AppResult<bool> {
     let out = proc::run_capture(
-        &proc::which("tar", &[]).ok_or_else(|| AppError::Extract("找不到系统 tar.exe".into()))?,
+        &proc::which("tar", &[]).ok_or_else(|| AppError::Extract(crate::tr!("找不到系统 tar.exe", "Cannot find the system tar.exe").into()))?,
         &["-tf".to_string(), archive.to_string_lossy().to_string()],
         Duration::from_secs(120),
     )?;
     if out.code != 0 {
-        return Err(AppError::Extract(format!("tar 列出失败: {}", out.combined())));
+        return Err(AppError::Extract(crate::tr!("tar 列出失败: {0}", "tar listing failed: {0}", out.combined())));
     }
     let mut tops: Vec<String> = Vec::new();
     for line in out.stdout.lines() {
@@ -70,9 +80,9 @@ pub fn deploy_archive(
     archive: &Path,
     install_dir: &Path,
     item_id: &str,
-    progress: &dyn Fn(&str, Option<f64>),
+    progress: &dyn Fn(DeployStage, &str, Option<f64>),
 ) -> AppResult<()> {
-    progress("准备解压", Some(0.05));
+    progress(DeployStage::Prepare, &crate::tr!("准备解压", "Preparing to extract"), Some(0.05));
 
     let temp = temp_dir_for(install_dir, item_id);
     if temp.exists() {
@@ -82,7 +92,7 @@ pub fn deploy_archive(
 
     let result = (|| -> AppResult<()> {
         let strip = has_single_top_level(archive)?;
-        let tar = proc::which("tar", &[]).ok_or_else(|| AppError::Extract("找不到系统 tar.exe".into()))?;
+        let tar = proc::which("tar", &[]).ok_or_else(|| AppError::Extract(crate::tr!("找不到系统 tar.exe", "Cannot find the system tar.exe").into()))?;
 
         let mut args = vec![
             "-xf".to_string(),
@@ -94,13 +104,13 @@ pub fn deploy_archive(
             args.push("--strip-components=1".to_string());
         }
 
-        progress("解压中", Some(0.35));
+        progress(DeployStage::Extracting, &crate::tr!("解压中", "Extracting"), Some(0.35));
         let out = proc::run_capture(&tar, &args, TAR_TIMEOUT)?;
         if out.code != 0 {
-            return Err(AppError::Extract(format!("tar 解压失败（退出码 {}）: {}", out.code, out.combined())));
+            return Err(AppError::Extract(crate::tr!("tar 解压失败（退出码 {0}）: {1}", "tar extraction failed (exit code {0}): {1}", out.code, out.combined())));
         }
 
-        progress("移动到安装目录", Some(0.8));
+        progress(DeployStage::Moving, &crate::tr!("移动到安装目录", "Moving to install directory"), Some(0.8));
         std::fs::create_dir_all(install_dir)?;
         move_contents(&temp, install_dir)?;
         Ok(())
@@ -109,9 +119,9 @@ pub fn deploy_archive(
     // 无论成败都清理临时目录（失败时不留半成品）
     let _ = std::fs::remove_dir_all(&temp);
     if result.is_ok() {
-        progress("完成", Some(1.0));
+        progress(DeployStage::Done, &crate::tr!("完成", "Done"), Some(1.0));
     } else {
-        progress("已清理临时文件", None);
+        progress(DeployStage::Cleaned, &crate::tr!("已清理临时文件", "Temporary files cleaned"), None);
     }
     result
 }
@@ -131,8 +141,9 @@ fn move_contents(src: &Path, dst: &Path) -> AppResult<()> {
                 std::fs::remove_file(&to).is_ok()
             };
             if !removed {
-                return Err(AppError::Extract(format!(
-                    "{} 被占用，无法覆盖，请关闭相关程序后重试",
+                return Err(AppError::Extract(crate::tr!(
+                    "{0} 被占用，无法覆盖，请关闭相关程序后重试",
+                    "{0} is in use and cannot be overwritten; close related programs and retry",
                     to.display()
                 )));
             }
@@ -142,7 +153,7 @@ fn move_contents(src: &Path, dst: &Path) -> AppResult<()> {
         }
     }
     for from in fallback {
-        let robocopy = proc::which("robocopy", &[]).ok_or_else(|| AppError::Extract("跨卷移动失败且找不到 robocopy".into()))?;
+        let robocopy = proc::which("robocopy", &[]).ok_or_else(|| AppError::Extract(crate::tr!("跨卷移动失败且找不到 robocopy", "Cross-volume move failed and robocopy was not found").into()))?;
         let out = proc::run_capture(
             &robocopy,
             &[
@@ -160,7 +171,7 @@ fn move_contents(src: &Path, dst: &Path) -> AppResult<()> {
         )?;
         // robocopy 退出码 < 8 视为成功
         if out.code >= 8 {
-            return Err(AppError::Extract(format!("robocopy 复制失败（退出码 {}）", out.code)));
+            return Err(AppError::Extract(crate::tr!("robocopy 复制失败（退出码 {0}）", "robocopy copy failed (exit code {0})", out.code)));
         }
     }
     Ok(())

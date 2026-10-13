@@ -124,7 +124,7 @@ pub fn ensure_path_entry(scope: Scope, dir: &str) -> AppResult<PathWrite> {
     match env_norm::path_append_value(&current, dir) {
         None => Ok(PathWrite::Skipped),
         Some(next) => {
-            let backup = backup_env("修改 PATH 前")?;
+            let backup = backup_env(&crate::tr!("修改 PATH 前", "Before PATH change"))?;
             if let Err(e) = write_path(scope, &next) {
                 // 写入失败：回滚到备份值，备份文件保留在备份目录
                 let name = backup.file_name().and_then(|s| s.to_str()).unwrap_or_default();
@@ -188,7 +188,8 @@ pub fn backup_env(label: &str) -> AppResult<PathBuf> {
     snapshot.insert("system".into(), system);
 
     std::fs::create_dir_all(backup_dir())?;
-    let ts = chrono::Local::now().format("%Y年%m月%d日 %H%M%S").to_string();
+    let fmt = if crate::i18n::is_en() { "%Y-%m-%d %H%M%S" } else { "%Y年%m月%d日 %H%M%S" };
+    let ts = chrono::Local::now().format(fmt).to_string();
     let path = backup_dir().join(format!("{label}-{ts}.json"));
     let json = serde_json::to_string_pretty(&snapshot).map_err(|e| AppError::Config(e.to_string()))?;
     std::fs::write(&path, json)?;
@@ -214,7 +215,7 @@ pub fn list_backups() -> AppResult<Vec<String>> {
 /// 校验备份文件名（防路径逃逸）并返回完整路径。
 fn backup_path(file_name: &str) -> AppResult<PathBuf> {
     if file_name.contains('\\') || file_name.contains('/') || file_name.contains("..") {
-        return Err(AppError::Config("非法的备份文件名".into()));
+        return Err(AppError::Config(crate::tr!("非法的备份文件名", "Invalid backup file name").into()));
     }
     Ok(backup_dir().join(file_name))
 }
@@ -222,13 +223,13 @@ fn backup_path(file_name: &str) -> AppResult<PathBuf> {
 /// 读取备份文件内容（JSON 快照）。
 pub fn read_backup(file_name: &str) -> AppResult<String> {
     let path = backup_path(file_name)?;
-    std::fs::read_to_string(&path).map_err(|e| AppError::Config(format!("读取备份失败: {e}")))
+    std::fs::read_to_string(&path).map_err(|e| AppError::Config(crate::tr!("读取备份失败: {0}", "Failed to read backup: {0}", e)))
 }
 
 /// 删除备份文件。
 pub fn delete_backup(file_name: &str) -> AppResult<()> {
     let path = backup_path(file_name)?;
-    std::fs::remove_file(&path).map_err(|e| AppError::Config(format!("删除备份失败: {e}")))
+    std::fs::remove_file(&path).map_err(|e| AppError::Config(crate::tr!("删除备份失败: {0}", "Failed to delete backup: {0}", e)))
 }
 
 /// 从备份文件恢复用户级与系统级 Environment（原始类型+字节原样写回，不降级 REG_EXPAND_SZ）。
@@ -277,16 +278,16 @@ pub fn restore_backup(file_name: &str) -> AppResult<()> {
     }
     broadcast_change();
     if ok == 0 && fail > 0 {
-        return Err(AppError::Registry(format!("环境变量恢复失败：{fail} 个值全部写入失败")));
+        return Err(AppError::Registry(crate::tr!("环境变量恢复失败：{0} 个值全部写入失败", "Failed to restore environment variables: all {0} values failed to write", fail)));
     }
     Ok(())
 }
 
 /// 把原始快照值（hex 解码 + 类型重建）写回注册表键。
 fn write_raw_value(key: &winreg::RegKey, name: &str, raw: &RawEnvValue) -> AppResult<()> {
-    let bytes = hex::decode(&raw.hex).map_err(|e| AppError::Config(format!("备份值 hex 解码失败: {e}")))?;
+    let bytes = hex::decode(&raw.hex).map_err(|e| AppError::Config(crate::tr!("备份值 hex 解码失败: {0}", "Failed to hex-decode backup value: {0}", e)))?;
     let vtype = reg_type_from_i32(raw.vtype)
-        .ok_or_else(|| AppError::Config(format!("未知注册表类型: {}", raw.vtype)))?;
+        .ok_or_else(|| AppError::Config(crate::tr!("未知注册表类型: {0}", "Unknown registry type: {0}", raw.vtype)))?;
     key.set_raw_value(name, &winreg::RegValue { bytes, vtype })
         .map_err(map_reg)?;
     Ok(())

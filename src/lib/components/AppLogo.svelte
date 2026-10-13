@@ -1,6 +1,7 @@
 <script lang="ts">
   // 应用图标（与 src-tauri/icons/app-icon.svg 同源）：
   // 蓝色圆角底板 + 白色立方体「软件包」+ 绿色完成徽章，象征「开发环境一键配好」。
+  import { t } from "../i18n.svelte";
   let { size = 24 }: { size?: number } = $props();
 </script>
 
@@ -10,7 +11,7 @@
   viewBox="0 0 1024 1024"
   xmlns="http://www.w3.org/2000/svg"
   role="img"
-  aria-label="开发环境快速配置助手"
+  aria-label={t("title.app_name")}
 >
   <defs>
     <linearGradient id="appLogoBg" x1="0" y1="0" x2="1" y2="1">

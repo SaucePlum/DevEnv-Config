@@ -3,6 +3,8 @@
   import { api } from "../lib/api";
   import { store } from "../lib/store.svelte";
   import type { ItemView, Params } from "../lib/types";
+  import type { MsgKey } from "../lib/i18n/messages";
+  import { t } from "../lib/i18n.svelte";
   import Toolbar from "../lib/components/Toolbar.svelte";
   import ItemRow from "../lib/components/ItemRow.svelte";
   import ProgressModal from "../lib/components/ProgressModal.svelte";
@@ -15,18 +17,15 @@
   let installingAll = $state(false);
 
   const order = ["runtime", "build", "database", "web", "vcredist", "ide"];
-  const titles: Record<string, string> = {
-    runtime: "运行环境", build: "编译工具链", database: "数据库", web: "Web 服务",
-    vcredist: "运行库", ide: "开发工具",
-  };
+  const categoryLabel = (k: string) => t(`category.${k}` as MsgKey);
 
   // 分类选项卡：全部 + 各分类
   let tab = $state("all");
   const tabs = $derived([
-    { key: "all", label: "全部" },
+    { key: "all", label: t("overview.all") },
     ...order
       .filter((k) => store.items.some((i) => i.category === k))
-      .map((k) => ({ key: k, label: titles[k] })),
+      .map((k) => ({ key: k, label: categoryLabel(k) })),
   ]);
   const visible = $derived(tab === "all" ? store.items : store.items.filter((i) => i.category === tab));
   const groups = $derived(order.filter((k) => visible.some((i) => i.category === k)));
@@ -67,16 +66,16 @@
   async function install(it: ItemView, extra: Params = {}) {
     const params: Params = { ...extra };
     // 二次确认：重装给出更明确的提示
-    const verb = it.status === "installed" ? "重装" : "安装";
-    const ver = chosen[it.id] ? `（版本 ${chosen[it.id]}）` : "";
-    const hint = it.status === "installed" ? "将再次运行安装向导并覆盖旧版本。" : "";
-    if (!(await askConfirm(`确认${verb} ${it.name}${ver}？${hint}`, { danger: it.status === "installed" }))) return;
+    const verb = it.status === "installed" ? t("item.reinstall") : t("item.install");
+    const ver = chosen[it.id] ? t("overview.version_suffix", { v: chosen[it.id] }) : "";
+    const hint = it.status === "installed" ? t("overview.reinstall_hint") : "";
+    if (!(await askConfirm(t("overview.confirm", { verb, name: it.name, ver, hint }), { danger: it.status === "installed" }))) return;
     if (it.needs_dir) {
-      const dir = await open({ directory: true, title: `选择 ${it.name} 的安装目录` });
+      const dir = await open({ directory: true, title: t("overview.choose_dir", { name: it.name }) });
       if (!dir || typeof dir !== "string") return;
       params.install_dir = dir;
       if (await api.dirNeedsConfirm(dir)) {
-        if (!(await askConfirm(`${dir} 已存在且非空，继续将覆盖同名文件？`, { danger: true }))) return;
+        if (!(await askConfirm(t("overview.dir_exists", { dir }), { danger: true }))) return;
       }
     }
     modal = { id: it.id, name: it.name };
@@ -97,17 +96,17 @@
         try { await install(it); } catch (e) { failed.push(`${it.name}: ${String(e)}`); }
       }
     } finally { installingAll = false; }
-    if (failed.length) await askAlert(`以下项安装失败：\n${failed.join("\n")}`, "批量安装结果");
+    if (failed.length) await askAlert(t("overview.batch_failed", { list: failed.join("\n") }), t("overview.batch_title"));
     onReload();
   }
 </script>
 
-<Toolbar title="开发环境配置" onInstallAll={installChecked} onRefresh={onReload} installDisabled={installingAll} />
+<Toolbar title={t("overview.title")} onInstallAll={installChecked} onRefresh={onReload} installDisabled={installingAll} />
 
 <div class="group" style="padding-bottom:0">
   <div class="tabs">
-    {#each tabs as t (t.key)}
-      <button class="tab" class:on={tab === t.key} onclick={() => (tab = t.key)}>{t.label}</button>
+    {#each tabs as tb (tb.key)}
+      <button class="tab" class:on={tab === tb.key} onclick={() => (tab = tb.key)}>{tb.label}</button>
     {/each}
   </div>
 </div>
@@ -115,7 +114,7 @@
 {#each groups as g (g)}
   <div class="group">
     <div class="group-head">
-      <h2>{titles[g]}</h2>
+      <h2>{categoryLabel(g)}</h2>
       <span class="badge mono">{visible.filter((i) => i.category === g).length}</span>
       <span class="grow"></span>
     </div>

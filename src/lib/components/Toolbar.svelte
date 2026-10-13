@@ -1,5 +1,6 @@
 <script lang="ts">
   import { store } from "../store.svelte";
+  import { t } from "../i18n.svelte";
   import AppButton from "./AppButton.svelte";
 
   let {
@@ -23,8 +24,8 @@
   const installed = $derived(store.items.filter((i) => i.status === "installed").length);
   const pending = $derived(store.items.filter((i) => i.status === "not_installed").length);
   const statItems = $derived(stats ?? [
-    { label: "已装", count: installed },
-    { label: "未装", count: pending },
+    { label: t("toolbar.installed"), count: installed },
+    { label: t("toolbar.not_installed"), count: pending },
   ]);
 </script>
 
@@ -38,14 +39,14 @@
   <div class="tb-actions">
     {#if showLts}
       <button class="switch" class:on={store.ltsOnly} onclick={() => (store.ltsOnly = !store.ltsOnly)}>
-        <span class="tk"></span>仅看 LTS
+        <span class="tk"></span>{t("toolbar.lts_only")}
       </button>
     {/if}
     {#if onRefresh}
-      <AppButton size="sm" onclick={onRefresh}>重新检测</AppButton>
+      <AppButton size="sm" onclick={onRefresh}>{t("toolbar.redetect")}</AppButton>
     {/if}
     {#if onInstallAll}
-      <AppButton size="sm" variant="primary" onclick={onInstallAll} disabled={installDisabled}>安装已选项</AppButton>
+      <AppButton size="sm" variant="primary" onclick={onInstallAll} disabled={installDisabled}>{t("toolbar.install_selected")}</AppButton>
     {/if}
   </div>
 </div>

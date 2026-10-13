@@ -13,6 +13,7 @@ kind = "installer"
 provider = { kind = "node_dist", prefer = "lts" }
 detect = { command = ["node", "--version"] }
 note = "MSI 会自动写入系统 PATH"
+note_en = "The MSI writes to the system PATH automatically"
 
 [[item]]
 id = "python"
@@ -23,6 +24,7 @@ kind = "installer"
 provider = { kind = "python_ftp", prefer = "latest" }
 detect = { command = ["python", "--version"] }
 note = "安装向导需勾选 Add python.exe to PATH"
+note_en = "Check Add python.exe to PATH in the installer"
 
 [[item]]
 id = "rust"
@@ -33,6 +35,7 @@ kind = "installer"
 provider = { kind = "rustup", url = "https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe", mirror = "https://rsproxy.cn/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe" }
 detect = { command = ["rustc", "--version"] }
 note = "安装后由 rustup 管理，默认工具链 stable"
+note_en = "Managed by rustup after install; the default toolchain is stable"
 
 [[item]]
 id = "go"
@@ -44,6 +47,7 @@ provider = { kind = "go_dl", prefer = "latest" }
 detect = { command = ["go", "version"] }
 env = { path_append = ["C:\\Program Files\\Go\\bin"] }
 note = "版本列表只显示正式版；安装包默认装到 C:\\Program Files\\Go 并由安装器写入 PATH"
+note_en = "Only stable releases are listed; the installer places Go in C:\\Program Files\\Go and adds it to PATH"
 
 [[item]]
 id = "dotnet"
@@ -55,6 +59,7 @@ provider = { kind = "dotnet_release", prefer = "lts" }
 detect = { command = ["dotnet", "--version"] }
 env = { path_append = ["C:\\Program Files\\dotnet"] }
 note = "只列出仍在支持期内的版本线；安装包会自动写入 PATH，未生效时由工具兜底追加"
+note_en = "Only release lines still in support are listed; the installer adds to PATH automatically, with a fallback by this tool"
 
 [[item]]
 id = "java"
@@ -68,6 +73,7 @@ detect = { command = ["java", "-version"] }
 env = { set = { JAVA_HOME = "{install_dir}" }, path_append = ["{install_dir}\\bin"] }
 verify = [["{install_dir}\\bin\\java.exe", "-version"]]
 note = "免安装版（Eclipse Temurin JDK），解压即用；请选择安装目录，工具会自动设置 JAVA_HOME 并加入 PATH"
+note_en = "Portable build (Eclipse Temurin JDK), ready after extraction; choose an install directory and the tool sets JAVA_HOME and PATH"
 
 [[item]]
 id = "ruby"
@@ -78,6 +84,7 @@ kind = "installer"
 provider = { kind = "github_release", repo = "oneclick/rubyinstaller2", asset = "rubyinstaller-{version}-x64.exe", prefer = "latest" }
 detect = { command = ["ruby", "--version"] }
 note = "版本列表来自 RubyInstaller 官方发布；安装向导请勾选「Add Ruby executables to your PATH」"
+note_en = "The version list comes from official RubyInstaller releases; check Add Ruby executables to your PATH in the installer"
 
 [[item]]
 id = "php"
@@ -91,6 +98,7 @@ detect = { command = ["php", "--version"] }
 env = { path_append = ["{install_dir}"] }
 verify = [["{install_dir}\\php.exe", "--version"]]
 note = "免安装包（线程安全版 x64），解压即用；请选择安装目录，工具会自动把目录加入 PATH。windows.php.net 无国内镜像，仅官网单一来源"
+note_en = "Portable package (thread-safe x64), ready after extraction; choose an install directory and the tool adds it to PATH. windows.php.net has no domestic mirror; official site only"
 
 [[item]]
 id = "miniconda"
@@ -102,6 +110,7 @@ provider = { kind = "miniconda", prefer = "latest" }
 detect = { command = ["conda", "--version"] }
 env = { path_append = ["%USERPROFILE%\\miniconda3", "%USERPROFILE%\\miniconda3\\Scripts"] }
 note = "Anaconda 官方精简版；向导默认装到 %USERPROFILE%\\miniconda3，若未勾选加入 PATH 则由工具兜底追加"
+note_en = "Official Anaconda minimal build; the installer defaults to %USERPROFILE%\\miniconda3, with a PATH fallback by this tool"
 
 [[item]]
 id = "bun"
@@ -115,6 +124,7 @@ detect = { command = ["bun", "--version"] }
 env = { set = { BUN_INSTALL = "{install_dir}" }, path_append = ["{install_dir}"] }
 verify = [["{install_dir}\\bun.exe", "--version"]]
 note = "免安装版，解压即用；请选择安装目录，工具会自动设置 BUN_INSTALL 并加入 PATH"
+note_en = "Portable build, ready after extraction; choose an install directory and the tool sets BUN_INSTALL and PATH"
 
 # ------------------------- 编译工具链 -------------------------
 [[item]]
@@ -136,6 +146,7 @@ path = "build/cmake/cmake-4.4.3-windows-x86_64.msi"
 detect = { command = ["cmake", "--version"] }
 env = { path_append = ["C:\\Program Files\\CMake\\bin"] }
 note = "内置安装包；向导可勾选加入 PATH，未勾选则自动追加"
+note_en = "Bundled installer; you may add to PATH in the wizard, otherwise it is appended automatically"
 
 # ------------------------- 数据库 -------------------------
 [[item]]
@@ -148,6 +159,7 @@ provider = { kind = "mariadb_rest", prefer = "latest" }
 detect = { registry_display_name_prefix = "MariaDB" }
 env = { path_append = ["C:\\Program Files\\MariaDB 12.3\\bin"] }
 note = "安装时请设置 root 密码；完成后自动把 bin 目录加入 PATH"
+note_en = "Set the root password during install; the bin directory is added to PATH afterwards"
 
 [[item]]
 id = "mysql"
@@ -227,6 +239,7 @@ provider = { kind = "static_list", versions = [
 ] }
 detect = { registry_display_name_prefix = "MySQL" }
 note = "列表为已实测可下载的版本；官方列表页有反爬限制，程序无法自动读取"
+note_en = "The list contains verified downloadable versions; the official list page blocks automated access"
 
 [[item]]
 id = "redis"
@@ -240,6 +253,7 @@ detect = { command = ["redis-server", "--version"] }
 env = { path_append = ["{install_dir}"] }
 verify = [["{install_dir}\\redis-cli.exe", "--version"]]
 note = "官方无 Windows 版，取自社区仓库；解压投放，不注册 Windows 服务"
+note_en = "No official Windows build; sourced from a community repo. Extracted in place, no Windows service is registered"
 
 [[item]]
 id = "mongodb"
@@ -253,6 +267,7 @@ detect = { command = ["mongod", "--version"] }
 env = { path_append = ["{install_dir}\\bin"] }
 verify = [["{install_dir}\\bin\\mongod.exe", "--version"]]
 note = "免安装社区版（各版本线的当前生产版），压缩包约 750MB；解压后不注册 Windows 服务，需要时用 mongod 手动启动"
+note_en = "Portable Community edition (current production of each line), archive about 750MB; no Windows service is registered, start mongod manually when needed"
 
 # ------------------------- Web 服务 -------------------------
 [[item]]
@@ -267,6 +282,7 @@ detect = { command = ["nginx", "-v"] }
 env = { path_append = ["{install_dir}"] }
 verify = [["{install_dir}\\nginx.exe", "-v"]]
 note = "免安装版，解压即用；偶数版本号是稳定线（默认推荐），奇数是主线版"
+note_en = "Portable build, ready after extraction; even minor numbers are stable (recommended by default), odd ones are mainline"
 
 [[item]]
 id = "apache"
@@ -280,11 +296,13 @@ detect = { command = ["httpd", "-v"] }
 env = { path_append = ["{install_dir}\\Apache24\\bin"] }
 verify = [["{install_dir}\\Apache24\\bin\\httpd.exe", "-v"]]
 note = "Windows 官方不分发二进制，取自官方推荐的 Apache Lounge 构建；解压后主程序在 Apache24 子目录，需先装好 VC++ 运行库（见运行库分类）"
+note_en = "Microsoft does not ship Windows binaries; this uses the official recommended Apache Lounge build. The main program is in the Apache24 subdirectory; install the VC++ Redistributable first (see Runtime libraries)"
 
 # ------------------------- 运行库 -------------------------
 [[item]]
 id = "vcredist"
 name = "VC++ 运行库 2015-2022"
+name_en = "VC++ Redistributable 2015-2022"
 category = "vcredist"
 source = "online"
 kind = "installer"
@@ -304,6 +322,7 @@ kind = "installer"
 provider = { kind = "fixed", urls = ["https://aka.ms/vs/17/release/vs_community.exe"] }
 detect = { path = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\devenv.exe" }
 note = "引导程序需联网下载数 GB 组件；安装时请勾选「使用 C++ 的桌面开发」"
+note_en = "The bootstrapper downloads several GB of components online; check Desktop development with C++ during install"
 
 # ------------------------- AI 编程工具 -------------------------
 # 以下条目的直链通过官方版本 API / 页面规则解析（永远指向最新版，不会因版本更新而失效）；
@@ -312,46 +331,55 @@ note = "引导程序需联网下载数 GB 组件；安装时请勾选「使用 C
 [[item]]
 id = "trae-cn"
 name = "Trae 国内版"
+name_en = "Trae (China)"
 category = "ide"
 source = "online"
 kind = "installer"
 provider = { kind = "trae_api", region = "cn" }
 detect = { registry_display_name_prefix = "TRAE CN", path = "%LOCALAPPDATA%\\Programs\\Trae\\Trae.exe" }
 note = "字节跳动 AI IDE 国内版（trae.cn）；国内/国际版共用安装目录，二选一安装"
+note_en = "ByteDance AI IDE, China edition (trae.cn); the China and International editions share an install directory, pick one"
 
 [[item]]
 id = "trae-intl"
 name = "Trae 国际版"
+name_en = "Trae (International)"
 category = "ide"
 source = "online"
 kind = "installer"
 provider = { kind = "trae_api", region = "sg" }
 detect = { registry_display_name_prefix = "Trae (User)", path = "%LOCALAPPDATA%\\Programs\\Trae\\Trae.exe" }
 note = "字节跳动 AI IDE 国际版（trae.ai），走新加坡 CDN；国内/国际版共用安装目录，二选一安装"
+note_en = "ByteDance AI IDE, International edition (trae.ai) via the Singapore CDN; the China and International editions share an install directory, pick one"
 
 [[item]]
 id = "codebuddy-cn"
 name = "CodeBuddy 国内版"
+name_en = "CodeBuddy (China)"
 category = "ide"
 source = "online"
 kind = "installer"
 provider = { kind = "update_api", url = "https://copilot.tencent.com/v2/update?platform=ide-win32-x64-user&version=1.0.0&x-machine-id=default" }
 detect = { registry_display_name_prefix = "CodeBuddy CN", path = "%LOCALAPPDATA%\\Programs\\CodeBuddy\\CodeBuddy.exe" }
 note = "腾讯 AI IDE 国内版（copilot.tencent.com）；默认仅当前用户安装，自带官方校验和"
+note_en = "Tencent AI IDE, China edition (copilot.tencent.com); installs for the current user by default, ships with an official checksum"
 
 [[item]]
 id = "codebuddy-intl"
 name = "CodeBuddy 国际版"
+name_en = "CodeBuddy (International)"
 category = "ide"
 source = "online"
 kind = "installer"
 provider = { kind = "update_api", url = "https://www.codebuddy.ai/v2/update?platform=ide-win32-x64-user&version=1.0.0&x-machine-id=default" }
 detect = { registry_display_name_prefix = "CodeBuddy (User)", path = "%LOCALAPPDATA%\\Programs\\CodeBuddy\\CodeBuddy.exe" }
 note = "腾讯 AI IDE 国际版（codebuddy.ai）；默认仅当前用户安装，自带官方校验和"
+note_en = "Tencent AI IDE, International edition (codebuddy.ai); installs for the current user by default, ships with an official checksum"
 
 [[item]]
 id = "workbuddy-cn"
 name = "WorkBuddy 国内版"
+name_en = "WorkBuddy (China)"
 category = "ide"
 source = "online"
 kind = "installer"
@@ -359,36 +387,43 @@ kind = "installer"
 provider = { kind = "update_api", url = "https://www.workbuddy.cn/v2/update?platform=workbuddy-win32-x64-user&version=5.0.0&x-machine-id=default" }
 detect = { registry_display_name_prefix = "WorkBuddy CN", path = "%LOCALAPPDATA%\\Programs\\WorkBuddy\\WorkBuddy.exe" }
 note = "腾讯 AI 办公智能体国内版（workbuddy.cn）；全场景办公助手，非纯编程 IDE"
+note_en = "Tencent AI office agent, China edition (workbuddy.cn); a general office assistant, not a pure coding IDE"
 
 [[item]]
 id = "workbuddy-intl"
 name = "WorkBuddy 国际版"
+name_en = "WorkBuddy (International)"
 category = "ide"
 source = "online"
 kind = "installer"
 provider = { kind = "update_api", url = "https://www.workbuddy.ai/v2/update?platform=workbuddy-win32-x64-user&version=5.0.0&x-machine-id=default" }
 detect = { registry_display_name_prefix = "WorkBuddy (User)", path = "%LOCALAPPDATA%\\Programs\\WorkBuddy\\WorkBuddy.exe" }
 note = "腾讯 AI 办公智能体国际版（workbuddy.ai）"
+note_en = "Tencent AI office agent, International edition (workbuddy.ai)"
 
 [[item]]
 id = "qoder-cn"
 name = "Qoder 国内版"
+name_en = "Qoder (China)"
 category = "ide"
 source = "online"
 kind = "installer"
 provider = { kind = "fixed", urls = ["https://qoder-ide-cn.oss-cn-hangzhou.aliyuncs.com/qoder/release/lastest/QoderCNIDEUserSetup-x64.exe"] }
 detect = { registry_display_name_prefix = "Qoder CN", path = "%LOCALAPPDATA%\\Programs\\Qoder\\Qoder.exe" }
 note = "阿里云 AI IDE 国内版（qoder.cn），官方 latest 固定路径始终指向最新版"
+note_en = "Alibaba Cloud AI IDE, China edition (qoder.cn); the official latest path always points to the newest version"
 
 [[item]]
 id = "qoder-intl"
 name = "Qoder 国际版"
+name_en = "Qoder (International)"
 category = "ide"
 source = "online"
 kind = "installer"
 provider = { kind = "fixed", urls = ["https://download.qoder.com/release/latest/QoderIDEUserSetup-x64.exe"] }
 detect = { registry_display_name_prefix = "Qoder (User)", path = "%LOCALAPPDATA%\\Programs\\Qoder\\Qoder.exe" }
 note = "阿里云 AI IDE 国际版（qoder.com），官方 latest 固定路径始终指向最新版"
+note_en = "Alibaba Cloud AI IDE, International edition (qoder.com); the official latest path always points to the newest version"
 
 [[item]]
 id = "vs2026"
@@ -399,6 +434,7 @@ kind = "installer"
 provider = { kind = "fixed", urls = ["https://aka.ms/vs/stable/vs_community.exe"] }
 detect = { registry_display_name_prefix = "Visual Studio Community 2026", path = "C:\\Program Files\\Microsoft Visual Studio\\18" }
 note = "社区版引导程序（aka.ms 长效短链，始终最新稳定版）；需联网下载数 GB 组件"
+note_en = "Community bootstrapper (aka.ms long-lived short link, always the latest stable); requires downloading several GB of components online"
 
 [[item]]
 id = "cursor"
@@ -409,6 +445,7 @@ kind = "installer"
 provider = { kind = "fixed", urls = ["https://api2.cursor.sh/updates/download/golden/win32-x64-user/cursor/latest"] }
 detect = { registry_display_name_prefix = "Cursor", path = "%LOCALAPPDATA%\\Programs\\cursor\\Cursor.exe" }
 note = "AI 代码编辑器；官方 latest 通道始终指向最新用户级安装包，需登录 Cursor 账号"
+note_en = "AI code editor; the official latest channel always points to the newest per-user installer, requires a Cursor account"
 
 [[item]]
 id = "kiro"
@@ -419,6 +456,7 @@ kind = "installer"
 provider = { kind = "page_regex", url = "https://kiro.dev/downloads/", version_regex = "https://prod\\.download\\.desktop\\.kiro\\.dev/[^\\s\"'<>]*kiro-ide-(\\d+\\.\\d+\\.\\d+)-stable-win32-x64\\.exe", url_template = "{match}" }
 detect = { registry_display_name_prefix = "Kiro", path = "%LOCALAPPDATA%\\Programs\\Kiro\\Kiro.exe" }
 note = "AWS 出品的 AI IDE；每次从官网下载页解析当前最新版安装包直链，始终最新"
+note_en = "AI IDE by AWS; the install link is resolved from the official downloads page every time, always the latest"
 
 [[item]]
 id = "opencode"
@@ -432,6 +470,7 @@ detect = { command = ["opencode", "--version"] }
 env = { path_append = ["{install_dir}"] }
 verify = [["{install_dir}\\opencode.exe", "--version"]]
 note = "终端 AI 编码代理（SST 开源），免安装解压即用；请选择安装目录，工具会自动加入 PATH。GitHub 单源，网络受限时需开启代理"
+note_en = "Terminal AI coding agent (open source by SST), portable and ready after extraction; choose an install directory and the tool adds it to PATH. GitHub only - enable a proxy if the network is restricted"
 
 [[item]]
 id = "claude-desktop"
@@ -442,6 +481,7 @@ kind = "installer"
 provider = { kind = "fixed", urls = ["https://claude.ai/api/desktop/win32/x64/setup/latest/redirect"] }
 detect = { registry_display_name_prefix = "Claude", path = "%LOCALAPPDATA%\\Programs\\claude\\claude.exe" }
 note = "Anthropic 官方桌面应用（内置 Claude Code）；官方 latest 通道，但 claude.ai 对中国大陆 IP 限制访问，需国际网络环境"
+note_en = "Anthropic official desktop app (bundles Claude Code); official latest channel, but claude.ai blocks mainland China IPs - an international network is required"
 
 [[item]]
 id = "zcode"
@@ -452,6 +492,7 @@ kind = "installer"
 provider = { kind = "page_regex", url = "https://zcode.z.ai/en", version_regex = "releases/(\\d+\\.\\d+\\.\\d+)/windows-x64", url_template = "https://cdn-zcode.z.ai/zcode/electron/releases/{version}/windows-x64/ZCode-{version}-win-x64.exe" }
 detect = { registry_display_name_prefix = "ZCode", path = "%LOCALAPPDATA%\\Programs\\ZCode\\ZCode.exe" }
 note = "智谱 Z.ai 的 GLM 编码智能体桌面端；每次从官网解析当前最新版安装包直链，始终最新"
+note_en = "Desktop coding agent by Zhipu Z.ai (GLM); the install link is resolved from the official site every time, always the latest"
 
 # ============================================================
 # 配置项（独立页面「环境配置」）
@@ -460,17 +501,18 @@ note = "智谱 Z.ai 的 GLM 编码智能体桌面端；每次从官网解析当�
 [[item]]
 id = "rust-mirror"
 name = "Rust 换源"
+name_en = "Rust mirror"
 category = "config"
 source = "config"
 kind = "config"
 requires = ["rust"]
 mirrors = [
-  { name = "清华",     url = "https://mirrors.tuna.tsinghua.edu.cn/rustup" },
-  { name = "中科大",   url = "https://mirrors.ustc.edu.cn/rust-static" },
-  { name = "阿里云",   url = "https://mirrors.aliyun.com/rustup" },
-  { name = "华为云",   url = "https://mirrors.huaweicloud.com/rustup" },
-  { name = "南大",     url = "https://mirror.nju.edu.cn/rustup" },
-  { name = "上海交大", url = "https://mirror.sjtu.edu.cn/rust-static" },
+  { name = "清华",     name_en = "Tsinghua",    url = "https://mirrors.tuna.tsinghua.edu.cn/rustup" },
+  { name = "中科大",   name_en = "USTC",        url = "https://mirrors.ustc.edu.cn/rust-static" },
+  { name = "阿里云",   name_en = "Aliyun",      url = "https://mirrors.aliyun.com/rustup" },
+  { name = "华为云",   name_en = "Huawei Cloud", url = "https://mirrors.huaweicloud.com/rustup" },
+  { name = "南大",     name_en = "NJU",         url = "https://mirror.nju.edu.cn/rustup" },
+  { name = "上海交大", name_en = "SJTU",        url = "https://mirror.sjtu.edu.cn/rust-static" },
   { name = "rsproxy",  url = "https://rsproxy.cn" }
 ]
 actions = [
@@ -478,21 +520,23 @@ actions = [
 ]
 detect = { env = ["RUSTUP_DIST_SERVER"] }
 note = "写入用户级环境变量，新开终端生效"
+note_en = "Writes user-level environment variables; takes effect in new terminals"
 
 [[item]]
 id = "cargo-mirror"
 name = "Cargo 换源"
+name_en = "Cargo mirror"
 category = "config"
 source = "config"
 kind = "config"
 requires = ["rust"]
 mirrors = [
-  { name = "清华",   url = "https://mirrors.tuna.tsinghua.edu.cn/crates.io-index/" },
-  { name = "中科大", url = "https://mirrors.ustc.edu.cn/crates.io-index/" },
-  { name = "阿里云", url = "https://mirrors.aliyun.com/crates.io-index/" },
-  { name = "华为云", url = "https://mirrors.huaweicloud.com/crates.io-index/" },
-  { name = "北外",   url = "https://mirrors.bfsu.edu.cn/crates.io-index/" },
-  { name = "南大",   url = "https://mirror.nju.edu.cn/crates.io-index/" },
+  { name = "清华",   name_en = "Tsinghua",    url = "https://mirrors.tuna.tsinghua.edu.cn/crates.io-index/" },
+  { name = "中科大", name_en = "USTC",        url = "https://mirrors.ustc.edu.cn/crates.io-index/" },
+  { name = "阿里云", name_en = "Aliyun",      url = "https://mirrors.aliyun.com/crates.io-index/" },
+  { name = "华为云", name_en = "Huawei Cloud", url = "https://mirrors.huaweicloud.com/crates.io-index/" },
+  { name = "北外",   name_en = "BFSU",        url = "https://mirrors.bfsu.edu.cn/crates.io-index/" },
+  { name = "南大",   name_en = "NJU",         url = "https://mirror.nju.edu.cn/crates.io-index/" },
   { name = "rsproxy", url = "https://rsproxy.cn/index/" }
 ]
 actions = [
@@ -503,37 +547,43 @@ detect = { file_contains = ["%USERPROFILE%\\.cargo\\config.toml", "replace-with"
 [[item]]
 id = "npm-mirror"
 name = "npm 换源"
+name_en = "npm mirror"
 category = "config"
 source = "config"
 kind = "config"
 requires = ["node"]
 mirrors = [
-  { name = "阿里 npmmirror", url = "https://registry.npmmirror.com" },
-  { name = "腾讯云", url = "https://mirrors.cloud.tencent.com/npm/" },
-  { name = "华为云", url = "https://mirrors.huaweicloud.com/repository/npm/" },
-  { name = "中科大", url = "https://npmreg.proxy.ustclug.org/" }
+  { name = "阿里 npmmirror", name_en = "Alibaba npmmirror", url = "https://registry.npmmirror.com" },
+  { name = "腾讯云", name_en = "Tencent Cloud", url = "https://mirrors.cloud.tencent.com/npm/" },
+  { name = "华为云", name_en = "Huawei Cloud", url = "https://mirrors.huaweicloud.com/repository/npm/" },
+  { name = "中科大", name_en = "USTC", url = "https://npmreg.proxy.ustclug.org/" }
 ]
 actions = [
-  { kind = "command", program = "npm", args = ["config", "set", "registry", "{mirror_url}"] }
+  { kind = "command", program = "npm", args = ["config", "set", "registry", "{mirror_url}"] },
+  # 中科大的源是 npmmirror 的代理，包元数据里的下载地址仍写着 registry.npmmirror.com，
+  # 而 npm 12 默认拒绝跨主机下载（报 EALLOWREMOTE）。让它把下载地址改写回所选源即可；
+  # 其余镜像返回的下载地址本就是自身主机，这条设置对它们是空操作。
+  { kind = "command", program = "npm", args = ["config", "set", "replace-registry-host", "always"] }
 ]
 detect = { command = ["npm", "config", "get", "registry"] }
 
 [[item]]
 id = "pip-mirror"
 name = "pip 换源"
+name_en = "pip mirror"
 category = "config"
 source = "config"
 kind = "config"
 requires = ["python"]
 mirrors = [
-  { name = "清华",     url = "https://pypi.tuna.tsinghua.edu.cn/simple" },
-  { name = "阿里云",   url = "https://mirrors.aliyun.com/pypi/simple/" },
-  { name = "腾讯云",   url = "https://mirrors.cloud.tencent.com/pypi/simple/" },
-  { name = "中科大",   url = "https://pypi.mirrors.ustc.edu.cn/simple/" },
-  { name = "华为云",   url = "https://repo.huaweicloud.com/repository/pypi/simple/" },
-  { name = "北外",     url = "https://mirrors.bfsu.edu.cn/pypi/web/simple" },
-  { name = "南大",     url = "https://mirror.nju.edu.cn/pypi/web/simple" },
-  { name = "上海交大", url = "https://mirror.sjtu.edu.cn/pypi/web/simple" }
+  { name = "清华",     name_en = "Tsinghua",    url = "https://pypi.tuna.tsinghua.edu.cn/simple" },
+  { name = "阿里云",   name_en = "Aliyun",      url = "https://mirrors.aliyun.com/pypi/simple/" },
+  { name = "腾讯云",   name_en = "Tencent Cloud", url = "https://mirrors.cloud.tencent.com/pypi/simple/" },
+  { name = "中科大",   name_en = "USTC",        url = "https://pypi.mirrors.ustc.edu.cn/simple/" },
+  { name = "华为云",   name_en = "Huawei Cloud", url = "https://repo.huaweicloud.com/repository/pypi/simple/" },
+  { name = "北外",     name_en = "BFSU",        url = "https://mirrors.bfsu.edu.cn/pypi/web/simple" },
+  { name = "南大",     name_en = "NJU",         url = "https://mirror.nju.edu.cn/pypi/web/simple" },
+  { name = "上海交大", name_en = "SJTU",        url = "https://mirror.sjtu.edu.cn/pypi/web/simple" }
 ]
 actions = [
   { kind = "command", program = "python", args = ["-m", "pip", "config", "set", "global.index-url", "{mirror_url}"] }
@@ -543,6 +593,7 @@ detect = { command = ["python", "-m", "pip", "config", "get", "global.index-url"
 [[item]]
 id = "go-mirror"
 name = "Go 模块代理"
+name_en = "Go module proxy"
 category = "config"
 source = "config"
 kind = "config"
@@ -556,10 +607,12 @@ actions = [
 ]
 detect = { env = ["GOPROXY"] }
 note = "写入用户级环境变量（GOPROXY），新开终端生效"
+note_en = "Writes the user-level GOPROXY environment variable; takes effect in new terminals"
 
 [[item]]
 id = "nuget-mirror"
 name = "NuGet 换源"
+name_en = "NuGet mirror"
 category = "config"
 source = "config"
 kind = "config"
@@ -567,7 +620,7 @@ requires = ["dotnet"]
 # 仅用于让命令行动作能找到 dotnet（应对刚装完 PATH 未刷新），不会写入注册表
 env = { path_append = ["C:\\Program Files\\dotnet"] }
 mirrors = [
-  { name = "华为云", url = "https://mirrors.huaweicloud.com/repository/nuget/v3/index.json" }
+  { name = "华为云", name_en = "Huawei Cloud", url = "https://mirrors.huaweicloud.com/repository/nuget/v3/index.json" }
 ]
 actions = [
   { kind = "command", program = "dotnet", args = ["nuget", "remove", "source", "devenv-mirror"], optional = true },
@@ -575,18 +628,20 @@ actions = [
 ]
 detect = { file_contains = ["%APPDATA%\\NuGet\\NuGet.Config", "devenv-mirror"] }
 note = "新增一个名为 devenv-mirror 的镜像源，不会改动或删除官方的 nuget.org"
+note_en = "Adds a mirror source named devenv-mirror; the official nuget.org is left untouched"
 
 [[item]]
 id = "gem-mirror"
 name = "RubyGems 换源"
+name_en = "RubyGems mirror"
 category = "config"
 source = "config"
 kind = "config"
 requires = ["ruby"]
 mirrors = [
-  { name = "清华", url = "https://mirrors.tuna.tsinghua.edu.cn/rubygems/" },
-  { name = "北外", url = "https://mirrors.bfsu.edu.cn/rubygems/" },
-  { name = "南大", url = "https://mirror.nju.edu.cn/rubygems/" }
+  { name = "清华", name_en = "Tsinghua", url = "https://mirrors.tuna.tsinghua.edu.cn/rubygems/" },
+  { name = "北外", name_en = "BFSU", url = "https://mirrors.bfsu.edu.cn/rubygems/" },
+  { name = "南大", name_en = "NJU", url = "https://mirror.nju.edu.cn/rubygems/" }
 ]
 actions = [
   { kind = "command", program = "gem", args = ["sources", "--add", "{mirror_url}"], optional = true },
@@ -594,27 +649,31 @@ actions = [
 ]
 detect = { file_contains = ["%USERPROFILE%\\.gemrc", "rubygems"] }
 note = "新增所选镜像源，并把官方 rubygems.org 从源列表移除；源已添加过时会提示但不视为失败"
+note_en = "Adds the selected mirror and removes the official rubygems.org; an already-added source is reported but not treated as a failure"
 
 [[item]]
 id = "composer-mirror"
 name = "Composer 换源"
+name_en = "Composer mirror"
 category = "config"
 source = "config"
 kind = "config"
 requires = ["php"]
 mirrors = [
-  { name = "阿里云", url = "https://mirrors.aliyun.com/composer/" },
-  { name = "腾讯云", url = "https://mirrors.cloud.tencent.com/composer/" }
+  { name = "阿里云", name_en = "Aliyun", url = "https://mirrors.aliyun.com/composer/" },
+  { name = "腾讯云", name_en = "Tencent Cloud", url = "https://mirrors.cloud.tencent.com/composer/" }
 ]
 actions = [
   { kind = "command", program = "composer", args = ["config", "-g", "repos.packagist", "composer", "{mirror_url}"] }
 ]
 detect = { file_contains = ["%APPDATA%\\Composer\\config.json", "packagist"] }
 note = "把 Packagist 指向所选镜像；需要已单独安装 Composer 并加入 PATH"
+note_en = "Points Packagist to the selected mirror; requires Composer installed separately and added to PATH"
 
 [[item]]
 id = "conda-mirror"
 name = "Conda 换源"
+name_en = "Conda mirror"
 category = "config"
 source = "config"
 kind = "config"
@@ -622,10 +681,10 @@ requires = ["miniconda"]
 # 仅用于让命令行动作能找到 conda（应对刚装完 PATH 未刷新），不会写入注册表
 env = { path_append = ["%USERPROFILE%\\miniconda3", "%USERPROFILE%\\miniconda3\\Scripts"] }
 mirrors = [
-  { name = "清华",   url = "https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/" },
-  { name = "北外",   url = "https://mirrors.bfsu.edu.cn/anaconda/pkgs/main/" },
-  { name = "南大",   url = "https://mirror.nju.edu.cn/anaconda/pkgs/main/" },
-  { name = "中科大", url = "https://mirrors.ustc.edu.cn/anaconda/pkgs/main/" }
+  { name = "清华",   name_en = "Tsinghua", url = "https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/" },
+  { name = "北外",   name_en = "BFSU", url = "https://mirrors.bfsu.edu.cn/anaconda/pkgs/main/" },
+  { name = "南大",   name_en = "NJU", url = "https://mirror.nju.edu.cn/anaconda/pkgs/main/" },
+  { name = "中科大", name_en = "USTC", url = "https://mirrors.ustc.edu.cn/anaconda/pkgs/main/" }
 ]
 actions = [
   { kind = "command", program = "conda", args = ["config", "--add", "channels", "{mirror_url}"] },
@@ -633,23 +692,26 @@ actions = [
 ]
 detect = { file_contains = ["%USERPROFILE%\\.condarc", "anaconda/pkgs/main"] }
 note = "把所选镜像的 main 频道加入 conda 频道列表；重复执行会重复添加频道，可在 ~/.condarc 里手工整理"
+note_en = "Adds the selected mirror main channel to conda; repeated runs add duplicates - tidy up manually in ~/.condarc"
 
 [[item]]
 id = "bun-mirror"
 name = "Bun 换源"
+name_en = "Bun mirror"
 category = "config"
 source = "config"
 kind = "config"
 requires = ["bun"]
 mirrors = [
-  { name = "阿里 npmmirror", url = "https://registry.npmmirror.com" },
-  { name = "腾讯云", url = "https://mirrors.cloud.tencent.com/npm/" }
+  { name = "阿里 npmmirror", name_en = "Alibaba npmmirror", url = "https://registry.npmmirror.com" },
+  { name = "腾讯云", name_en = "Tencent Cloud", url = "https://mirrors.cloud.tencent.com/npm/" }
 ]
 actions = [
   { kind = "toml_merge", file = "%USERPROFILE%\\.bunfig.toml", set = [ { path = "install.registry", value = "{mirror_url}" } ] }
 ]
 detect = { file_contains = ["%USERPROFILE%\\.bunfig.toml", "registry"] }
 note = "写入 ~/.bunfig.toml 的 install.registry，对 bun install 全局生效"
+note_en = "Writes install.registry to ~/.bunfig.toml, applying globally to bun install"
 
 [[item]]
 id = "pnpm"
@@ -668,19 +730,21 @@ actions = [
 ]
 detect = { command = ["pnpm", "--version"] }
 note = "通过 Node 自带的 corepack 安装（pnpm 10 的 npm 包在 Windows 上入口脚本损坏，直接 npm 装会报「不是内部或外部命令」）；同时设置 PNPM_HOME=%LOCALAPPDATA%\\pnpm 供全局包使用。向 node 安装目录写 shim 需要管理员权限"
+note_en = "Installed via Node built-in corepack (the npm package for pnpm 10 has a broken Windows entry script; installing via npm fails with a not-recognized error); also sets PNPM_HOME=%LOCALAPPDATA%\\pnpm for global packages. Writing a shim into the Node install directory requires administrator rights"
 
 [[item]]
 id = "pnpm-mirror"
 name = "pnpm 换源"
+name_en = "pnpm mirror"
 category = "config"
 source = "config"
 kind = "config"
 requires = ["pnpm"]
 mirrors = [
-  { name = "阿里 npmmirror", url = "https://registry.npmmirror.com" },
-  { name = "腾讯云", url = "https://mirrors.cloud.tencent.com/npm/" },
-  { name = "华为云", url = "https://mirrors.huaweicloud.com/repository/npm/" },
-  { name = "中科大", url = "https://npmreg.proxy.ustclug.org/" }
+  { name = "阿里 npmmirror", name_en = "Alibaba npmmirror", url = "https://registry.npmmirror.com" },
+  { name = "腾讯云", name_en = "Tencent Cloud", url = "https://mirrors.cloud.tencent.com/npm/" },
+  { name = "华为云", name_en = "Huawei Cloud", url = "https://mirrors.huaweicloud.com/repository/npm/" },
+  { name = "中科大", name_en = "USTC", url = "https://npmreg.proxy.ustclug.org/" }
 ]
 actions = [
   { kind = "command", program = "pnpm", args = ["config", "set", "registry", "{mirror_url}", "--global"] }
@@ -699,54 +763,60 @@ actions = [
 ]
 detect = { command = ["yarn", "--version"] }
 note = "通过 npm 全局安装 Yarn Classic（1.x）；装完与 npm 全局包同目录，无需额外环境变量"
+note_en = "Installs Yarn Classic (1.x) globally via npm; it lands in the same directory as npm global packages, no extra environment variables needed"
 
 [[item]]
 id = "yarn-mirror"
 name = "Yarn 换源"
+name_en = "Yarn mirror"
 category = "config"
 source = "config"
 kind = "config"
 requires = ["yarn"]
 mirrors = [
-  { name = "阿里 npmmirror", url = "https://registry.npmmirror.com" },
-  { name = "腾讯云", url = "https://mirrors.cloud.tencent.com/npm/" },
-  { name = "华为云", url = "https://mirrors.huaweicloud.com/repository/npm/" },
-  { name = "中科大", url = "https://npmreg.proxy.ustclug.org/" }
+  { name = "阿里 npmmirror", name_en = "Alibaba npmmirror", url = "https://registry.npmmirror.com" },
+  { name = "腾讯云", name_en = "Tencent Cloud", url = "https://mirrors.cloud.tencent.com/npm/" },
+  { name = "华为云", name_en = "Huawei Cloud", url = "https://mirrors.huaweicloud.com/repository/npm/" },
+  { name = "中科大", name_en = "USTC", url = "https://npmreg.proxy.ustclug.org/" }
 ]
 actions = [
   { kind = "command", program = "yarn", args = ["config", "set", "registry", "{mirror_url}"] }
 ]
 detect = { command = ["yarn", "config", "get", "registry"] }
 note = "对 Yarn Classic（1.x）生效；Yarn Berry（2+）的源写在项目内 .yarnrc.yml，不受此影响"
+note_en = "Applies to Yarn Classic (1.x); Yarn Berry (2+) stores its registry in the project .yarnrc.yml and is unaffected"
 
 [[item]]
 id = "maven-mirror"
 name = "Maven 换源"
+name_en = "Maven mirror"
 category = "config"
 source = "config"
 kind = "config"
 requires = ["java"]
 mirrors = [
-  { name = "阿里云", url = "https://maven.aliyun.com/repository/public" },
-  { name = "腾讯云", url = "https://mirrors.cloud.tencent.com/nexus/repository/maven-public/" },
-  { name = "华为云", url = "https://mirrors.huaweicloud.com/repository/maven/" }
+  { name = "阿里云", name_en = "Aliyun", url = "https://maven.aliyun.com/repository/public" },
+  { name = "腾讯云", name_en = "Tencent Cloud", url = "https://mirrors.cloud.tencent.com/nexus/repository/maven-public/" },
+  { name = "华为云", name_en = "Huawei Cloud", url = "https://mirrors.huaweicloud.com/repository/maven/" }
 ]
 actions = [
   { kind = "xml_merge", file = "%USERPROFILE%\\.m2\\settings.xml", root = "settings", container = "mirrors", child = "mirror", id_tag = "id", id_value = "devenv-mirror", fields = { mirrorOf = "central", url = "{mirror_url}" } }
 ]
 detect = { file_contains = ["%USERPROFILE%\\.m2\\settings.xml", "devenv-mirror"] }
 note = "在 ~/.m2/settings.xml 中新增名为 devenv-mirror 的中央仓库镜像；需要已单独安装 Maven"
+note_en = "Adds a central repository mirror named devenv-mirror to ~/.m2/settings.xml; requires Maven installed separately"
 
 [[item]]
 id = "gradle-mirror"
 name = "Gradle 换源"
+name_en = "Gradle mirror"
 category = "config"
 source = "config"
 kind = "config"
 requires = ["java"]
 mirrors = [
-  { name = "阿里云", url = "https://maven.aliyun.com/repository/public" },
-  { name = "腾讯云", url = "https://mirrors.cloud.tencent.com/nexus/repository/maven-public/" }
+  { name = "阿里云", name_en = "Aliyun", url = "https://maven.aliyun.com/repository/public" },
+  { name = "腾讯云", name_en = "Tencent Cloud", url = "https://mirrors.cloud.tencent.com/nexus/repository/maven-public/" }
 ]
 actions = [
   { kind = "file_write", file = "%USERPROFILE%\\.gradle\\init.d\\devenv-mirror.gradle", lines = [
@@ -761,18 +831,20 @@ actions = [
 ]
 detect = { file_contains = ["%USERPROFILE%\\.gradle\\init.d\\devenv-mirror.gradle", "allprojects"] }
 note = "在 ~/.gradle/init.d/ 下写入镜像脚本，Gradle 每次构建都会自动加载；删除该文件即可还原；需要已单独安装 Gradle"
+note_en = "Writes a mirror script under ~/.gradle/init.d/ that Gradle loads on every build; delete the file to revert; requires Gradle installed separately"
 
 [[item]]
 id = "cran-mirror"
 name = "CRAN 换源"
+name_en = "CRAN mirror"
 category = "config"
 source = "config"
 kind = "config"
 mirrors = [
-  { name = "清华", url = "https://mirrors.tuna.tsinghua.edu.cn/CRAN/" },
-  { name = "中科大", url = "https://mirrors.ustc.edu.cn/CRAN/" },
-  { name = "北外", url = "https://mirrors.bfsu.edu.cn/CRAN/" },
-  { name = "南大", url = "https://mirror.nju.edu.cn/CRAN/" }
+  { name = "清华", name_en = "Tsinghua", url = "https://mirrors.tuna.tsinghua.edu.cn/CRAN/" },
+  { name = "中科大", name_en = "USTC", url = "https://mirrors.ustc.edu.cn/CRAN/" },
+  { name = "北外", name_en = "BFSU", url = "https://mirrors.bfsu.edu.cn/CRAN/" },
+  { name = "南大", name_en = "NJU", url = "https://mirror.nju.edu.cn/CRAN/" }
 ]
 actions = [
   { kind = "file_ensure_lines", file = "%USERPROFILE%\\.Rprofile", lines = [
@@ -781,6 +853,7 @@ actions = [
 ]
 detect = { file_contains = ["%USERPROFILE%\\.Rprofile", "CRAN"] }
 note = "在 ~/.Rprofile 中写入 CRAN 镜像地址，对所有 R 会话生效；本工具不安装 R，需已自行安装"
+note_en = "Writes the CRAN mirror into ~/.Rprofile for all R sessions; this tool does not install R - install it yourself first"
 
 [[item]]
 id = "codex-cli"
@@ -794,6 +867,7 @@ actions = [
 ]
 detect = { command = ["codex", "--version"] }
 note = "OpenAI 终端编码代理，通过 npm 全局安装；使用 ChatGPT 账号登录，国内网络需代理"
+note_en = "OpenAI terminal coding agent, installed globally via npm; sign in with a ChatGPT account - a proxy is needed on mainland networks"
 
 [[item]]
 id = "claude-cli"
@@ -807,10 +881,12 @@ actions = [
 ]
 detect = { command = ["claude", "--version"] }
 note = "Anthropic 终端编码代理，通过 npm 全局安装；需 Anthropic 账号，国内网络需代理"
+note_en = "Anthropic terminal coding agent, installed globally via npm; requires an Anthropic account - a proxy is needed on mainland networks"
 
 [[item]]
 id = "npm-dirs"
 name = "npm 全局目录与缓存"
+name_en = "npm global directory & cache"
 category = "config"
 source = "config"
 kind = "config"
@@ -822,10 +898,12 @@ actions = [
 ]
 detect = { command = ["npm", "config", "get", "prefix"] }
 note = "改动后，已安装的全局包需重装才会在新目录生效"
+note_en = "After the change, existing global packages must be reinstalled to take effect in the new directory"
 
 [[item]]
 id = "git-identity"
 name = "Git 身份"
+name_en = "Git identity"
 category = "config"
 source = "config"
 kind = "config"
@@ -839,6 +917,7 @@ detect = { command = ["git", "config", "--global", "user.name"] }
 [[item]]
 id = "ssh-key"
 name = "SSH 密钥"
+name_en = "SSH key"
 category = "config"
 source = "config"
 kind = "config"
@@ -848,3 +927,4 @@ actions = [
 ]
 detect = { path = "%USERPROFILE%\\.ssh" }
 note = "生成的私钥无口令保护；已有同名密钥时不会覆盖"
+note_en = "The generated private key has no passphrase; an existing key with the same name is not overwritten"

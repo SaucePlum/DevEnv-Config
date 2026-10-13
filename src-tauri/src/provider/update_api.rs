@@ -49,8 +49,8 @@ pub fn parse_resp(
     sha_field: &str,
 ) -> Result<(String, String, Option<String>), ProviderError> {
     let r: RawResp = serde_json::from_str(json).map_err(|e| ProviderError::Parse(e.to_string()))?;
-    let version = field(&r, version_field).ok_or_else(|| ProviderError::Parse(format!("缺少字段 {version_field}")))?;
-    let url = field(&r, url_field).ok_or_else(|| ProviderError::Parse(format!("缺少字段 {url_field}")))?;
+    let version = field(&r, version_field).ok_or_else(|| ProviderError::Parse(crate::tr!("缺少字段 {0}", "Missing field {0}", version_field)))?;
+    let url = field(&r, url_field).ok_or_else(|| ProviderError::Parse(crate::tr!("缺少字段 {0}", "Missing field {0}", url_field)))?;
     let sha = field(&r, sha_field);
     Ok((version, url, sha))
 }

@@ -77,7 +77,7 @@ async fn fetch_pages() -> Result<Vec<String>, ProviderError> {
     }
     // 至少一个页面抓到即可继续；全部失败才报错
     if out.is_empty() {
-        Err(last.unwrap_or(ProviderError::Index("Apache 页面地址为空".into())))
+        Err(last.unwrap_or(ProviderError::Index(crate::tr!("Apache 页面地址为空", "Apache page URL is empty"))))
     } else {
         Ok(out)
     }
@@ -91,7 +91,7 @@ impl VersionProvider for ApacheLoungeProvider {
         let list = merge_pages(&pages.iter().map(|s| s.as_str()).collect::<Vec<_>>(), prefer)?;
         // 页面结构变化时宁可报错，也不要静默给出空列表
         if list.is_empty() {
-            return Err(ProviderError::Index("没有从下载页解析到 Apache 的 Win64 包".into()));
+            return Err(ProviderError::Index(crate::tr!("没有从下载页解析到 Apache 的 Win64 包", "No Apache Win64 package parsed from the download page")));
         }
         Ok(list)
     }

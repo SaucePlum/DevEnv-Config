@@ -137,7 +137,7 @@ impl VersionProvider for MariadbRestProvider {
         let majors = parse_majors(&majors_json);
         let stable: Vec<MajorRelease> = majors.into_iter().filter(|m| m.stable).collect();
         if stable.is_empty() {
-            return Err(ProviderError::Index("MariaDB 稳定版大版本列表为空".into()));
+            return Err(ProviderError::Index(crate::tr!("MariaDB 稳定版大版本列表为空", "MariaDB stable major version list is empty")));
         }
         let mut minors = Vec::new();
         // 查最新 5 个稳定大版本，覆盖主流选择；每个大版本下列出全部小版本
@@ -154,8 +154,8 @@ impl VersionProvider for MariadbRestProvider {
         let list = merge_versions(&sorted, &minors, prefer);
         if list.is_empty() {
             let msg = match last_err {
-                Some(e) => format!("MariaDB 未解析到可用版本: {e}"),
-                None => "MariaDB 未解析到可用版本".to_string(),
+                Some(e) => crate::tr!("MariaDB 未解析到可用版本: {0}", "MariaDB: no usable version parsed: {0}", e),
+                None => crate::tr!("MariaDB 未解析到可用版本", "MariaDB: no usable version parsed"),
             };
             return Err(ProviderError::Index(msg));
         }

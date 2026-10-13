@@ -1,11 +1,12 @@
 <script lang="ts">
   import { store } from "../store.svelte";
+  import { t } from "../i18n.svelte";
 
   const pages = [
-    { key: "overview", label: "开发环境配置", count: () => store.items.filter((i) => i.kind !== "config").length },
-    { key: "config", label: "环境变量配置", count: () => store.items.filter((i) => i.kind === "config").length },
-    { key: "download", label: "下载管理", count: () => null },
-    { key: "about", label: "关于", count: () => null },
+    { key: "overview", label: "nav.overview", count: () => store.items.filter((i) => i.kind !== "config").length },
+    { key: "config", label: "nav.config", count: () => store.items.filter((i) => i.kind === "config").length },
+    { key: "download", label: "nav.download", count: () => null },
+    { key: "about", label: "nav.about", count: () => null },
   ] as const;
 
   const icon = (key: string) => {
@@ -23,7 +24,7 @@
   {#each pages as p (p.key)}
     <button class="nav-item" class:on={store.page === p.key} onclick={() => (store.page = p.key)}>
       <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">{@html icon(p.key)}</svg>
-      <span>{p.label}</span>
+      <span>{t(p.label)}</span>
       {#if p.count() !== null}<span class="ct mono">{p.count()}</span>{/if}
     </button>
   {/each}

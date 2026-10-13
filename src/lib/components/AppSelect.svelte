@@ -1,12 +1,14 @@
 <script lang="ts">
+  import { t } from "../i18n.svelte";
   // 自定义下拉框：替代原生 <select>，支持外部点击/Esc 收起、空间不足时向上展开
   let {
     options,
     value = $bindable(),
     disabled = false,
-    placeholder = "请选择",
+    placeholder = "",
     width = "auto",
     onselect,
+    display,
   }: {
     options: { value: string; label: string }[];
     value?: string;
@@ -14,13 +16,15 @@
     placeholder?: string;
     width?: string;
     onselect?: () => void;
+    /** 覆盖按钮上显示的文案（值不在 options 里时用，例如「未换源」） */
+    display?: string;
   } = $props();
 
   let open = $state(false);
   let up = $state(false);
   let root: HTMLDivElement;
 
-  const label = $derived(options.find((o) => o.value === value)?.label ?? value ?? placeholder);
+  const label = $derived(display ?? options.find((o) => o.value === value)?.label ?? value ?? (placeholder || t("select.placeholder")));
 
   $effect(() => {
     if (!open) return;
@@ -69,7 +73,7 @@
         </button>
       {/each}
       {#if options.length === 0}
-        <div class="menu-item" style="color:var(--text-3)">无可选项</div>
+        <div class="menu-item" style="color:var(--text-3)">{t("select.empty")}</div>
       {/if}
     </div>
   {/if}

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { VersionInfo } from "../types";
+  import { t } from "../i18n.svelte";
   let { versions, value = $bindable(), enabled = true }: { versions: VersionInfo[]; value?: string; enabled?: boolean } = $props();
   let open = $state(false);
   let up = $state(false);
@@ -50,11 +51,11 @@
           onclick={() => { value = v.version; open = false; }}>
           <span class="mono">{v.version}</span>
           {#if v.lts}<span class="chip">LTS</span>{/if}
-          {#if v.recommended}<span class="chip ok">推荐</span>{/if}
+          {#if v.recommended}<span class="chip ok">{t("version.recommended")}</span>{/if}
         </button>
       {/each}
       {#if versions.length === 0}
-        <div class="menu-item" style="color:var(--text-3)">无法获取版本列表</div>
+        <div class="menu-item" style="color:var(--text-3)">{t("version.unavailable")}</div>
       {/if}
     </div>
   {/if}

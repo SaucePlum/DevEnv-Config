@@ -15,7 +15,7 @@ fn urls_of(item: &Item) -> Vec<String> {
 /// 固定项只暴露一个占位版本，界面据此始终选中它。
 pub fn single_version(item: &Item) -> VersionInfo {
     VersionInfo {
-        version: item.expect_version.clone().unwrap_or_else(|| "最新".to_string()),
+        version: item.expect_version.clone().unwrap_or_else(|| crate::tr!("最新", "latest")),
         lts: false,
         lts_name: None,
         date: None,

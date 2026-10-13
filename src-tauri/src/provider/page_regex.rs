@@ -21,7 +21,7 @@ fn cfg(item: &Item) -> Result<(String, String, String), ProviderError> {
 /// 纯解析：从页面文本提取所有版本号（捕获组 1），返回去重后的最高版本与对应整匹配。
 /// 若正则命中的是完整 URL（含 https://），整匹配可直接作为下载地址。
 pub fn pick_latest(html: &str, version_regex: &str) -> Result<(String, String), ProviderError> {
-    let re = regex::Regex::new(version_regex).map_err(|e| ProviderError::Parse(format!("正则无效: {e}")))?;
+    let re = regex::Regex::new(version_regex).map_err(|e| ProviderError::Parse(crate::tr!("正则无效: {0}", "Invalid regex: {0}", e)))?;
     let mut best: Option<(String, String)> = None; // (版本, 整匹配)
     for cap in re.captures_iter(html) {
         let whole = cap.get(0).map(|m| m.as_str().to_string()).unwrap_or_default();
@@ -37,7 +37,7 @@ pub fn pick_latest(html: &str, version_regex: &str) -> Result<(String, String), 
             best = Some((ver, whole));
         }
     }
-    best.ok_or_else(|| ProviderError::Index("页面中没有匹配到版本号".into()))
+    best.ok_or_else(|| ProviderError::Index(crate::tr!("页面中没有匹配到版本号", "No version number matched on the page")))
 }
 
 #[async_trait::async_trait]
@@ -55,7 +55,7 @@ impl VersionProvider for PageRegexProvider {
         let (version, whole) = pick_latest(&body, &version_regex)?;
         let real_url = template.replace("{version}", &version).replace("{match}", &whole);
         if !real_url.starts_with("https://") {
-            return Err(ProviderError::Parse(format!("模板拼出的地址非法: {real_url}")));
+            return Err(ProviderError::Parse(crate::tr!("模板拼出的地址非法: {0}", "URL built from template is invalid: {0}", real_url)));
         }
         let file_name = real_url.rsplit('/').next().unwrap_or("download.exe").to_string();
         Ok(vec![DownloadTarget { file_name, urls: vec![real_url], sha256: None, md5: None }])

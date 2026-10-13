@@ -18,6 +18,8 @@ pub struct Item {
     pub category: String,
     pub source: Source,
     pub kind: Kind,
+    /// 英文界面下的显示名；缺省时回退到 `name`。
+    #[serde(default)] pub name_en: Option<String>,
     #[serde(default)] pub provider: Option<ProviderDef>,
     #[serde(default)] pub path: Option<String>,
     #[serde(default)] pub archive: Option<Archive>,
@@ -28,13 +30,35 @@ pub struct Item {
     #[serde(default)] pub env: Option<EnvAction>,
     #[serde(default)] pub verify: Vec<Vec<String>>,
     #[serde(default)] pub note: Option<String>,
+    /// 英文界面下的备注；缺省时回退到 `note`。
+    #[serde(default)] pub note_en: Option<String>,
     #[serde(default)] pub expect_version: Option<String>,
+}
+
+/// 按当前语言二选一：英文界面且提供了英文文案时用英文，否则用中文原文。
+pub fn pick(zh: &str, en: Option<&str>) -> String {
+    if crate::i18n::is_en() {
+        if let Some(e) = en {
+            return e.to_string();
+        }
+    }
+    zh.to_string()
 }
 
 impl Item {
     /// 免安装类需要用户指定安装目录。
     pub fn needs_install_dir(&self) -> bool {
         self.kind == Kind::Portable
+    }
+
+    /// 当前语言下的显示名。
+    pub fn display_name(&self) -> String {
+        pick(&self.name, self.name_en.as_deref())
+    }
+
+    /// 当前语言下的备注。
+    pub fn display_note(&self) -> Option<String> {
+        self.note.as_ref().map(|n| pick(n, self.note_en.as_deref()))
     }
 }
 
@@ -118,7 +142,16 @@ pub struct StaticVersion {
 #[derive(Debug, Clone, Deserialize, serde::Serialize)]
 pub struct Mirror {
     pub name: String,
+    /// 英文界面下的镜像源名；缺省时回退到 `name`。
+    #[serde(default, skip_serializing_if = "Option::is_none")] pub name_en: Option<String>,
     pub url: String,
+}
+
+impl Mirror {
+    /// 当前语言下的镜像源显示名。
+    pub fn display_name(&self) -> String {
+        pick(&self.name, self.name_en.as_deref())
+    }
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -198,22 +231,42 @@ pub struct TomlSetEntry { pub path: String, pub value: String }
 #[derive(Debug, Clone, Deserialize)]
 pub struct TomlSetTableEntry { pub path: String, pub key: String, pub value: String }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum ManifestError {
-    #[error("清单解析失败: {0}")]
-    Parse(#[from] toml::de::Error),
-    #[error("清单中存在重复 id: {0}")]
+    Parse(toml::de::Error),
     DuplicateId(String),
-    #[error("在线项缺少 provider: {0}")]
     MissingProvider(String),
-    #[error("内置项缺少 path: {0}")]
     MissingPath(String),
-    #[error("配置项缺少 actions: {0}")]
     MissingActions(String),
-    #[error("免安装项缺少 archive: {0}")]
     MissingArchive(String),
-    #[error("配置项 {0} 依赖了不存在的 id: {1}")]
     UnknownRequirement(String, String),
+}
+
+impl std::fmt::Display for ManifestError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use crate::tr;
+        match self {
+            ManifestError::Parse(e) => write!(f, "{}", tr!("清单解析失败: {0}", "Manifest parse failed: {0}", e)),
+            ManifestError::DuplicateId(id) => write!(f, "{}", tr!("清单中存在重复 id: {0}", "Duplicate id in manifest: {0}", id)),
+            ManifestError::MissingProvider(id) => write!(f, "{}", tr!("在线项缺少 provider: {0}", "Online item missing provider: {0}", id)),
+            ManifestError::MissingPath(id) => write!(f, "{}", tr!("内置项缺少 path: {0}", "Bundled item missing path: {0}", id)),
+            ManifestError::MissingActions(id) => write!(f, "{}", tr!("配置项缺少 actions: {0}", "Config item missing actions: {0}", id)),
+            ManifestError::MissingArchive(id) => write!(f, "{}", tr!("免安装项缺少 archive: {0}", "Portable item missing archive: {0}", id)),
+            ManifestError::UnknownRequirement(id, dep) => write!(
+                f,
+                "{}",
+                tr!("配置项 {0} 依赖了不存在的 id: {1}", "Config item {0} depends on unknown id: {1}", id, dep)
+            ),
+        }
+    }
+}
+
+impl std::error::Error for ManifestError {}
+
+impl From<toml::de::Error> for ManifestError {
+    fn from(e: toml::de::Error) -> Self {
+        ManifestError::Parse(e)
+    }
 }
 
 impl Manifest {

@@ -23,18 +23,34 @@ pub mod static_list;
 pub mod trae_api;
 pub mod update_api;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum ProviderError {
-    #[error("该项无版本源定义")]
     NoProvider,
-    #[error("无法获取版本列表: {0}")]
     Index(String),
-    #[error("无法解析版本列表: {0}")]
     Parse(String),
-    #[error("没有匹配的下载文件: {0}")]
     NoAsset(String),
-    #[error(transparent)]
-    Http(#[from] crate::http::HttpError),
+    Http(crate::http::HttpError),
+}
+
+impl std::fmt::Display for ProviderError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use crate::tr;
+        match self {
+            ProviderError::NoProvider => f.write_str(&tr!("该项无版本源定义", "No version source defined for this item")),
+            ProviderError::Index(s) => write!(f, "{}", tr!("无法获取版本列表: {0}", "Failed to fetch version list: {0}", s)),
+            ProviderError::Parse(s) => write!(f, "{}", tr!("无法解析版本列表: {0}", "Failed to parse version list: {0}", s)),
+            ProviderError::NoAsset(s) => write!(f, "{}", tr!("没有匹配的下载文件: {0}", "No matching download file: {0}", s)),
+            ProviderError::Http(e) => write!(f, "{e}"),
+        }
+    }
+}
+
+impl std::error::Error for ProviderError {}
+
+impl From<crate::http::HttpError> for ProviderError {
+    fn from(e: crate::http::HttpError) -> Self {
+        ProviderError::Http(e)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -84,7 +84,7 @@ pub fn parse(text: &str) -> Result<(Option<String>, Node), String> {
                 }
             }
             Ok(Event::End(_)) => {
-                let done = stack.pop().ok_or("多余的结束标签")?;
+                let done = stack.pop().ok_or_else(|| crate::tr!("多余的结束标签", "Unexpected closing tag"))?;
                 match stack.last_mut() {
                     Some(top) => {
                         match top.children.last_mut() {
@@ -117,7 +117,7 @@ pub fn parse(text: &str) -> Result<(Option<String>, Node), String> {
     }
     match root {
         Some(r) => Ok((decl, r)),
-        None => Err("没有找到根元素".into()),
+        None => Err(crate::tr!("没有找到根元素", "No root element found")),
     }
 }
 
@@ -191,7 +191,7 @@ pub fn merge(
         Some(t) if !t.trim().is_empty() => {
             let (d, r) = parse(t)?;
             if r.name != root_name {
-                return Err(format!("根元素是 <{}>，期望 <{root_name}>", r.name));
+                return Err(crate::tr!("根元素是 <{0}>，期望 <{1}>", "Root element is <{0}>, expected <{1}>", r.name, root_name));
             }
             (d, r)
         }
@@ -271,7 +271,7 @@ pub fn merge_into_file(
         None
     };
     let next = merge(original.as_deref(), root_name, container, child, id_tag, id_value, fields)
-        .map_err(|e| AppError::Config(format!("{} 解析失败: {e}", path.display())))?;
+        .map_err(|e| AppError::Config(crate::tr!("{0} 解析失败: {1}", "Failed to parse {0}: {1}", path.display(), e)))?;
     let changed = original.as_deref() != Some(next.as_str());
     if changed {
         std::fs::write(path, next)?;

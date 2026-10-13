@@ -38,13 +38,13 @@ pub fn verify_checksums(path: &Path, sha256: Option<&str>, md5: Option<&str>) ->
     if let Some(expect) = sha256 {
         let got = sha256_file(path)?;
         if !got.eq_ignore_ascii_case(expect.trim()) {
-            return Err(AppError::Checksum(format!("SHA256 不匹配：期望 {expect}，实际 {got}")));
+            return Err(AppError::Checksum(crate::tr!("SHA256 不匹配：期望 {0}，实际 {1}", "SHA256 mismatch: expected {0}, got {1}", expect, got)));
         }
     }
     if let Some(expect) = md5 {
         let got = md5_file(path)?;
         if !got.eq_ignore_ascii_case(expect.trim()) {
-            return Err(AppError::Checksum(format!("MD5 不匹配：期望 {expect}，实际 {got}")));
+            return Err(AppError::Checksum(crate::tr!("MD5 不匹配：期望 {0}，实际 {1}", "MD5 mismatch: expected {0}, got {1}", expect, got)));
         }
     }
     Ok(())
@@ -98,10 +98,13 @@ pub async fn fetch(
     let mut seen: Vec<&String> = Vec::new();
     for u in &attempted { if !seen.contains(&u) { seen.push(u); } }
     let list = seen.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("; ");
-    Err(AppError::Download(format!(
-        "{file} 下载失败：共尝试 {n} 次（地址：{list}）。最后错误：{last_err}",
-        file = target.file_name,
-        n = attempted.len()
+    Err(AppError::Download(crate::tr!(
+        "{0} 下载失败：共尝试 {1} 次（地址：{2}）。最后错误：{3}",
+        "{0} download failed: tried {1} time(s) (URLs: {2}). Last error: {3}",
+        target.file_name,
+        attempted.len(),
+        list,
+        last_err
     )))
 }
 
@@ -122,9 +125,9 @@ async fn download_one(
         .get(url)
         .send()
         .await
-        .map_err(|e| AppError::Download(format!("{url} 连接失败: {e}")))?;
+        .map_err(|e| AppError::Download(crate::tr!("{0} 连接失败: {1}", "Failed to connect to {0}: {1}", url, e)))?;
     if !resp.status().is_success() {
-        return Err(AppError::Download(format!("{url} 返回 HTTP {}", resp.status().as_u16())));
+        return Err(AppError::Download(crate::tr!("{0} 返回 HTTP {1}", "{0} returned HTTP {1}", url, resp.status().as_u16())));
     }
     let total = resp.content_length();
     let part = part_path(dest);
@@ -132,7 +135,7 @@ async fn download_one(
     let mut stream = resp.bytes_stream();
     let mut done: u64 = 0;
     while let Some(chunk) = stream.next().await {
-        let chunk = chunk.map_err(|e| AppError::Download(format!("{url} 传输中断: {e}")))?;
+        let chunk = chunk.map_err(|e| AppError::Download(crate::tr!("{0} 传输中断: {1}", "Transfer interrupted for {0}: {1}", url, e)))?;
         tokio::io::AsyncWriteExt::write_all(&mut file, &chunk).await?;
         done += chunk.len() as u64;
         progress(done, total);

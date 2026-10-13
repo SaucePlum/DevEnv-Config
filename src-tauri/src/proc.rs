@@ -108,7 +108,7 @@ pub fn run_capture(program: &Path, args: &[String], timeout: Duration) -> AppRes
     cmd.creation_flags(CREATE_NO_WINDOW);
 
     let mut child = cmd.spawn()
-        .map_err(|e| AppError::Command(format!("无法启动 {}: {e}", program.display())))?;
+        .map_err(|e| AppError::Command(crate::tr!("无法启动 {0}: {1}", "Failed to launch {0}: {1}", program.display(), e)))?;
 
     // 立即接管管道并由独立线程排空：子进程写满管道会阻塞，若不读会导致假超时误杀
     let out_pipe = child.stdout.take();
@@ -134,8 +134,9 @@ pub fn run_capture(program: &Path, args: &[String], timeout: Duration) -> AppRes
                     let _ = child.wait();
                     // 不 join 读线程：孙进程可能仍持有继承的管道写端，join 会阻塞到其退出；
                     // JoinHandle 丢弃即 detach，读线程在管道 EOF 后自行结束
-                    return Err(AppError::Command(format!(
-                        "{} 执行超时（{} 秒）",
+                    return Err(AppError::Command(crate::tr!(
+                        "{0} 执行超时（{1} 秒）",
+                        "{0} timed out ({1}s)",
                         program.display(),
                         timeout.as_secs()
                     )));
@@ -146,8 +147,8 @@ pub fn run_capture(program: &Path, args: &[String], timeout: Duration) -> AppRes
         }
     };
 
-    let stdout = out_reader.join().map_err(|_| AppError::Command("读取 stdout 线程失败".into()))?;
-    let stderr = err_reader.join().map_err(|_| AppError::Command("读取 stderr 线程失败".into()))?;
+    let stdout = out_reader.join().map_err(|_| AppError::Command(crate::tr!("读取 stdout 线程失败", "Failed to read stdout thread").into()))?;
+    let stderr = err_reader.join().map_err(|_| AppError::Command(crate::tr!("读取 stderr 线程失败", "Failed to read stderr thread").into()))?;
     Ok(CmdOutput {
         code: status.code().unwrap_or(-1),
         stdout: decode_console_output(&stdout),
@@ -191,7 +192,7 @@ fn ansi_decode(bytes: &[u8]) -> String {
 /// 便捷入口：先 which，再执行。
 pub fn run_program(program: &str, args: &[String], extra_dirs: &[PathBuf], timeout: Duration) -> AppResult<CmdOutput> {
     let exe = which(program, extra_dirs)
-        .ok_or_else(|| AppError::Command(format!("未在 PATH 中找到「{program}」，可能尚未安装")))?;
+        .ok_or_else(|| AppError::Command(crate::tr!("未在 PATH 中找到「{0}」，可能尚未安装", "{0} was not found in PATH; it may not be installed", program)))?;
     run_capture(&exe, args, timeout)
 }
 

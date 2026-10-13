@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from "svelte";
   import { api, onItemState, onLog } from "./lib/api";
   import { store, applyItemEvent, pushLog, setTheme } from "./lib/store.svelte";
+  import { initLang, t } from "./lib/i18n.svelte";
   import TitleBar from "./lib/components/TitleBar.svelte";
   import Sidebar from "./lib/components/Sidebar.svelte";
   import Overview from "./views/Overview.svelte";
@@ -33,13 +34,16 @@
   }
 
   onMount(async () => {
-    window.addEventListener("error", (e) => reportError(`界面错误：${e.message}`));
-    window.addEventListener("unhandledrejection", (e) => reportError(`未处理的异常：${String((e as PromiseRejectionEvent).reason)}`));
+    window.addEventListener("error", (e) => reportError(t("app.ui_error", { msg: e.message })));
+    window.addEventListener("unhandledrejection", (e) => reportError(t("app.unhandled", { msg: String((e as PromiseRejectionEvent).reason) })));
+    // 语言切换后，后端的软件名/备注/检测详情会变，需要重新拉取
+    window.addEventListener("devenv:lang", () => load());
     setTheme("light");
     store.elevated = await api.isElevated().catch(() => true);
     store.cacheMb = await api.cacheSizeMb().catch(() => 0);
     unlisten.push(await onItemState(applyItemEvent));
     unlisten.push(await onLog(pushLog));
+    await initLang();
     await load();
   });
 
@@ -51,9 +55,9 @@
   <Sidebar />
   <main class="main">
     {#if loading}
-      <div style="padding:40px" class="mono">正在检测本机环境…</div>
+      <div style="padding:40px" class="mono">{t("app.detecting")}</div>
     {:else if loadError}
-      <div style="padding:40px;color:var(--err)">检测失败：{loadError}<span style="margin-left:12px;display:inline-block"><AppButton size="sm" onclick={load}>重试</AppButton></span></div>
+      <div style="padding:40px;color:var(--err)">{t("app.detect_failed", { err: loadError })}<span style="margin-left:12px;display:inline-block"><AppButton size="sm" onclick={load}>{t("common.retry")}</AppButton></span></div>
     {:else if store.page === "overview"}
       <Overview onReload={load} />
     {:else if store.page === "config"}
@@ -67,3 +71,4 @@
   <LogDrawer />
   <ConfirmModal />
 </div>
+

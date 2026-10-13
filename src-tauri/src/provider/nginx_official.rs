@@ -50,7 +50,7 @@ impl VersionProvider for NginxOfficialProvider {
         let list = parse_page(&body, prefer)?;
         // 页面结构变化时宁可报错，也不要静默给出空列表
         if list.is_empty() {
-            return Err(ProviderError::Index("没有从下载页解析到 nginx 版本".into()));
+            return Err(ProviderError::Index(crate::tr!("没有从下载页解析到 nginx 版本", "No nginx version parsed from the download page")));
         }
         Ok(list)
     }

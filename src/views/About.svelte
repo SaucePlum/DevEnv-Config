@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { api } from "../lib/api";
+  import { t } from "../lib/i18n.svelte";
+  import type { MsgKey } from "../lib/i18n/messages";
   import AppLogo from "../lib/components/AppLogo.svelte";
 
   let version = $state("");
@@ -11,12 +13,12 @@
     elevated = await api.isElevated().catch(() => false);
   });
 
-  const features = [
-    "一键安装 20+ 开发工具：运行环境、编译工具链、数据库、Web 服务与 AI 编程工具",
-    "全部软件默认选最新稳定版，国内提供镜像回落，下载带校验和与缓存",
-    "环境变量写入前自动备份，一键还原；路径写入前做规范化去重",
-    "十几种包管理器换源：npm、pnpm、pip、Cargo、Go、Maven、Composer 等",
-    "已安装检测以注册表为准，自定义安装盘符与目录也能正确识别",
+  const features: MsgKey[] = [
+    "about.feature1",
+    "about.feature2",
+    "about.feature3",
+    "about.feature4",
+    "about.feature5",
   ];
 </script>
 
@@ -26,60 +28,60 @@
       <div style="display:flex;align-items:center;gap:14px">
         <AppLogo size={48} />
         <div>
-          <div style="font-size:18px;font-weight:700">开发环境快速配置助手</div>
-          <div class="mono" style="color:var(--text-3);font-size:12.5px">版本 {version || "…"} · 运行在 Windows · MIT 开源协议</div>
+          <div style="font-size:18px;font-weight:700">{t("about.app_name")}</div>
+          <div class="mono" style="color:var(--text-3);font-size:12.5px">{t("about.version_line", { v: version || "…" })}</div>
         </div>
       </div>
       <p style="margin:14px 0 0;color:var(--text-2);font-size:13px;line-height:1.7">
-        为 Windows 开发者准备的一站式环境组装工具：选好要装的软件，剩下的下载、安装引导、环境变量、换源配置全部由工具完成。
+        {t("about.desc")}
       </p>
     </div>
   </div>
 
   <div class="group">
-    <div class="group-head"><h2>它能做什么</h2></div>
+    <div class="group-head"><h2>{t("about.features_title")}</h2></div>
     <div class="card">
       {#each features as f, i (i)}
         <div class="row" style="grid-template-columns:minmax(0,1fr)">
-          <span style="color:var(--text-2);font-size:13px">{f}</span>
+          <span style="color:var(--text-2);font-size:13px">{t(f)}</span>
         </div>
       {/each}
     </div>
   </div>
 
   <div class="group">
-    <div class="group-head"><h2>开源</h2></div>
+    <div class="group-head"><h2>{t("about.opensource_title")}</h2></div>
     <div class="card">
       <div class="row" style="grid-template-columns:minmax(0,1fr) auto">
-        <span style="font-size:13px;color:var(--text-2)">本项目以 MIT 协议开源，源码可自由查看、修改与分发</span>
+        <span style="font-size:13px;color:var(--text-2)">{t("about.opensource1")}</span>
       </div>
       <div class="row" style="grid-template-columns:minmax(0,1fr) auto">
-        <span style="font-size:13px;color:var(--text-3)">完整源码与构建说明见仓库中的 README.md；运行日志仅保存在本机，不会上传任何数据</span>
+        <span style="font-size:13px;color:var(--text-3)">{t("about.opensource2")}</span>
       </div>
     </div>
   </div>
 
   <div class="group">
-    <div class="group-head"><h2>关于作者</h2></div>
+    <div class="group-head"><h2>{t("about.author_title")}</h2></div>
     <div class="card">
       <div class="row" style="grid-template-columns:minmax(0,1fr)">
         <div>
-          <div style="font-size:13.5px;font-weight:600">小念</div>
+          <div style="font-size:13.5px;font-weight:600">{t("about.author_name")}</div>
           <div style="font-size:12.5px;color:var(--text-3);margin-top:4px">
-            开发者与维护者。遇到问题或想提功能建议，欢迎到开源仓库提 Issue。
+            {t("about.author_desc")}
           </div>
         </div>
       </div>
       <div class="row" style="grid-template-columns:minmax(0,1fr)">
         <span class="mono" style="font-size:12px;color:var(--text-3)">
-          当前以{elevated ? "管理员" : "普通"}权限运行；软件包默认从官网拉取，失败自动回落国内镜像
+          {t("about.elevated", { level: elevated ? t("about.level_admin") : t("about.level_normal") })}
         </span>
       </div>
     </div>
   </div>
 
   <div style="text-align:center;color:var(--text-3);font-size:12px;margin-top:8px">
-    用心打磨，让环境配置不再繁琐
+    {t("about.footer")}
   </div>
 </div>
 

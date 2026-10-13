@@ -36,7 +36,7 @@ pub fn run_actions(item: &Item, mirror_url: Option<&str>, params: &Params) -> Ap
     let fill = |s: &str| -> AppResult<String> {
         let v = fill_raw(s);
         if let Some(rest) = placeholder_re.as_ref().and_then(|re| re.find(&v).map(|m| m.as_str().to_string())) {
-            return Err(AppError::Config(format!("参数 {rest} 未提供，无法执行该项配置")));
+            return Err(AppError::Config(crate::tr!("参数 {0} 未提供，无法执行该项配置", "Parameter {0} not provided; cannot run this configuration", rest)));
         }
         Ok(v)
     };
@@ -44,23 +44,23 @@ pub fn run_actions(item: &Item, mirror_url: Option<&str>, params: &Params) -> Ap
     for action in &item.actions {
         match action {
             Action::EnvSet { scope, set, path_append } => {
-                env::backup_env(&format!("{}（写入环境变量前）", item.name))?;
+                env::backup_env(&crate::tr!("{0}（写入环境变量前）", "{0} (before env write)", item.display_name()))?;
                 for (k, val) in set {
                     let key = fill(k)?;
                     // %VAR% 在写入前展开为绝对路径：普通 REG_SZ 不会像 PATH 一样被系统展开，
                     // 字面量 %LOCALAPPDATA%\pnpm 存进去后依赖它的程序拿不到真实路径
                     let value = env_norm::expand_env(&fill(val)?);
                     env::set_var(*scope, &key, &value)?;
-                    logs.push(StepLog { ok: true, message: format!("设置环境变量 {key}={value}") });
+                    logs.push(StepLog { ok: true, message: crate::tr!("设置环境变量 {0}={1}", "Set environment variable {0}={1}", key, value) });
                 }
                 for dir in path_append {
                     let dir = fill(dir)?;
                     let r = env::ensure_path_entry(*scope, &dir)?;
                     let msg = match r {
                         env::PathWrite::Skipped => {
-                            format!("PATH 已由安装器配置，跳过：{dir}")
+                            crate::tr!("PATH 已由安装器配置，跳过：{0}", "PATH already configured by installer, skipping: {0}", dir)
                         }
-                        env::PathWrite::Appended => format!("PATH 追加：{dir}"),
+                        env::PathWrite::Appended => crate::tr!("PATH 追加：{0}", "PATH appended: {0}", dir),
                     };
                     logs.push(StepLog { ok: true, message: msg });
                 }
@@ -72,19 +72,19 @@ pub fn run_actions(item: &Item, mirror_url: Option<&str>, params: &Params) -> Ap
                 match proc::run_program(&prog, &argv, &extra_dirs(item), Duration::from_secs(120)) {
                     Ok(out) if out.code == 0 => logs.push(StepLog {
                         ok: true,
-                        message: format!("执行 {} 成功：{}", prog, out.combined()),
+                        message: crate::tr!("执行 {0} 成功：{1}", "Ran {0} successfully: {1}", prog, out.combined()),
                     }),
                     Ok(out) => {
-                        let msg = format!("执行 {} 失败（退出码 {}）：{}", prog, out.code, out.combined());
+                        let msg = crate::tr!("执行 {0} 失败（退出码 {1}）：{2}", "Failed to run {0} (exit code {1}): {2}", prog, out.code, out.combined());
                         if *optional {
-                            logs.push(StepLog { ok: false, message: format!("（可忽略）{msg}") });
+                            logs.push(StepLog { ok: false, message: crate::tr!("（可忽略）{0}", "(ignorable) {0}", msg) });
                         } else {
                             return Err(AppError::Command(msg));
                         }
                     }
                     Err(e) => {
                         if *optional {
-                            logs.push(StepLog { ok: false, message: format!("（可忽略）{e}") });
+                            logs.push(StepLog { ok: false, message: crate::tr!("（可忽略）{0}", "(ignorable) {0}", e) });
                         } else {
                             return Err(e);
                         }
@@ -131,9 +131,9 @@ pub fn run_actions(item: &Item, mirror_url: Option<&str>, params: &Params) -> Ap
                 logs.push(StepLog {
                     ok: true,
                     message: if changed {
-                        format!("已合并 XML 配置：{}", path.display())
+                        crate::tr!("已合并 XML 配置：{0}", "Merged XML config: {0}", path.display())
                     } else {
-                        format!("XML 配置已是期望内容，跳过：{}", path.display())
+                        crate::tr!("XML 配置已是期望内容，跳过：{0}", "XML config already as expected, skipping: {0}", path.display())
                     },
                 });
             }
@@ -143,7 +143,7 @@ pub fn run_actions(item: &Item, mirror_url: Option<&str>, params: &Params) -> Ap
                     fill(l)?;
                 }
                 write_whole_file(&path, lines, &fill_raw)?;
-                logs.push(StepLog { ok: true, message: format!("已写入：{}", path.display()) });
+                logs.push(StepLog { ok: true, message: crate::tr!("已写入：{0}", "Written: {0}", path.display()) });
             }
             Action::FileEnsureLines { file, lines } => {
                 let path = PathBuf::from(env_norm::expand_env(&fill(file)?));
@@ -151,7 +151,7 @@ pub fn run_actions(item: &Item, mirror_url: Option<&str>, params: &Params) -> Ap
                     fill(l)?;
                 }
                 ensure_lines(&path, lines, &fill_raw)?;
-                logs.push(StepLog { ok: true, message: format!("已确认配置行：{}", path.display()) });
+                logs.push(StepLog { ok: true, message: crate::tr!("已确认配置行：{0}", "Config lines ensured: {0}", path.display()) });
             }
         }
     }
@@ -177,7 +177,7 @@ pub fn merge_toml(
     let mut doc: DocumentMut = if path.exists() {
         std::fs::read_to_string(path)?
             .parse::<DocumentMut>()
-            .map_err(|e| AppError::Config(format!("{} 解析失败: {e}", path.display())))?
+            .map_err(|e| AppError::Config(crate::tr!("{0} 解析失败: {1}", "Failed to parse {0}: {1}", path.display(), e)))?
     } else {
         DocumentMut::new()
     };
@@ -192,7 +192,7 @@ pub fn merge_toml(
     }
 
     std::fs::write(path, doc.to_string())?;
-    Ok(StepLog { ok: true, message: format!("已合并配置：{}", path.display()) })
+    Ok(StepLog { ok: true, message: crate::tr!("已合并配置：{0}", "Merged config: {0}", path.display()) })
 }
 
 /// 整文件写入（FileWrite 动作）。用于本工具自托管的文件（如 Gradle init.d 固定命名脚本），
@@ -249,23 +249,27 @@ pub fn ensure_lines(path: &Path, lines: &[String], fill: &dyn Fn(&str) -> String
 
 fn set_dotted(doc: &mut toml_edit::DocumentMut, path: &Path, dotted: &str, value: toml_edit::Value) -> AppResult<()> {
     let mut parts: Vec<&str> = dotted.split('.').collect();
-    let key = parts.pop().ok_or_else(|| AppError::Config("空的路径".into()))?;
+    let key = parts.pop().ok_or_else(|| AppError::Config(crate::tr!("空的路径", "Empty path")))?;
     let mut cur: &mut toml_edit::Item = doc.as_item_mut();
     for p in parts {
         // 中间段已被非表值占用时，toml_edit 的 IndexMut 会 panic（expect），这里显式报错
         if cur.get(p).map(|it| it.as_table_like().is_none()).unwrap_or(false) {
-            return Err(AppError::Config(format!(
-                "{dotted} 的中间段 \"{p}\" 已被非表值占用，无法写入；请手工修正 {}", path.display())));
+            return Err(AppError::Config(crate::tr!(
+                "{0} 的中间段 \"{1}\" 已被非表值占用，无法写入；请手工修正 {2}",
+                "The intermediate segment \"{1}\" of {0} is occupied by a non-table value; fix {2} manually",
+                dotted, p, path.display())));
         }
         if cur.get(p).is_none() {
             cur[p] = toml_edit::Item::Table(toml_edit::Table::new());
         }
-        cur = cur.get_mut(p).ok_or_else(|| AppError::Config(format!("无法创建表 {p}")))?;
+        cur = cur.get_mut(p).ok_or_else(|| AppError::Config(crate::tr!("无法创建表 {0}", "Cannot create table {0}", p)))?;
     }
     // 已是表不能被单值整体覆盖
     if cur.get(key).map(|it| it.as_table_like().is_some()).unwrap_or(false) {
-        return Err(AppError::Config(format!(
-            "{dotted} 已是表，不能被单值覆盖；请手工修正 {}", path.display())));
+        return Err(AppError::Config(crate::tr!(
+            "{0} 已是表，不能被单值覆盖；请手工修正 {1}",
+            "{0} is already a table and cannot be overwritten by a single value; fix {1} manually",
+            dotted, path.display())));
     }
     cur[key] = toml_edit::Item::Value(value);
     Ok(())
@@ -281,19 +285,21 @@ fn set_dotted_table(
     let mut cur: &mut toml_edit::Item = doc.as_item_mut();
     for p in dotted.split('.') {
         if cur.get(p).map(|it| it.as_table_like().is_none()).unwrap_or(false) {
-            return Err(AppError::Config(format!(
-                "{dotted} 的中间段 \"{p}\" 已被非表值占用，无法写入；请手工修正 {}", path.display())));
+            return Err(AppError::Config(crate::tr!(
+                "{0} 的中间段 \"{1}\" 已被非表值占用，无法写入；请手工修正 {2}",
+                "The intermediate segment \"{1}\" of {0} is occupied by a non-table value; fix {2} manually",
+                dotted, p, path.display())));
         }
         if cur.get(p).is_none() {
             cur[p] = toml_edit::Item::Table(toml_edit::Table::new());
         }
-        cur = cur.get_mut(p).ok_or_else(|| AppError::Config(format!("无法创建表 {p}")))?;
+        cur = cur.get_mut(p).ok_or_else(|| AppError::Config(crate::tr!("无法创建表 {0}", "Cannot create table {0}", p)))?;
     }
     if let Some(t) = cur.as_table_mut() {
         t[key] = toml_edit::Item::Value(value);
         Ok(())
     } else {
-        Err(AppError::Config(format!("{dotted} 不是表；请手工修正 {}", path.display())))
+        Err(AppError::Config(crate::tr!("{0} 不是表；请手工修正 {1}", "{0} is not a table; fix {1} manually", dotted, path.display())))
     }
 }
 
@@ -304,14 +310,14 @@ pub fn ssh_keygen(key_path: &Path, key_type: &str, comment: &str) -> AppResult<S
     if pub_path.exists() {
         return Ok(StepLog {
             ok: true,
-            message: format!("已存在密钥，复用不覆盖：{}", key_path.display()),
+            message: crate::tr!("已存在密钥，复用不覆盖：{0}", "Key already exists; reusing without overwriting: {0}", key_path.display()),
         });
     }
     if let Some(parent) = key_path.parent() {
         std::fs::create_dir_all(parent)?;
     }
     let ssh_keygen = proc::which("ssh-keygen", &[PathBuf::from("C:\\Windows\\System32\\OpenSSH")])
-        .ok_or_else(|| AppError::Config("找不到 ssh-keygen，请先安装 OpenSSH 客户端".into()))?;
+        .ok_or_else(|| AppError::Config(crate::tr!("找不到 ssh-keygen，请先安装 OpenSSH 客户端", "ssh-keygen not found; please install the OpenSSH Client").into()))?;
 
     if key_path.exists() {
         // 私钥在而 .pub 缺：用 ssh-keygen -y 从私钥重建公钥（私钥有口令时此路不通）
@@ -321,13 +327,14 @@ pub fn ssh_keygen(key_path: &Path, key_type: &str, comment: &str) -> AppResult<S
             Duration::from_secs(30),
         )?;
         if out.code != 0 || out.stdout.trim().is_empty() {
-            return Err(AppError::Config(format!(
-                "已存在私钥但缺少公钥，且无法自动重建（若私钥设有口令请手工处理）：{}",
+            return Err(AppError::Config(crate::tr!(
+                "已存在私钥但缺少公钥，且无法自动重建（若私钥设有口令请手工处理）：{0}",
+                "A private key exists but the public key is missing and cannot be rebuilt automatically (if the private key is passphrase-protected, handle it manually): {0}",
                 out.combined()
             )));
         }
         std::fs::write(&pub_path, format!("{}\n", out.stdout.trim()))?;
-        return Ok(StepLog { ok: true, message: format!("已从现有私钥重建公钥：{}", pub_path.display()) });
+        return Ok(StepLog { ok: true, message: crate::tr!("已从现有私钥重建公钥：{0}", "Rebuilt public key from the existing private key: {0}", pub_path.display()) });
     }
 
     let out = proc::run_capture(
@@ -345,9 +352,9 @@ pub fn ssh_keygen(key_path: &Path, key_type: &str, comment: &str) -> AppResult<S
         Duration::from_secs(60),
     )?;
     if out.code != 0 || !key_path.exists() {
-        return Err(AppError::Config(format!("ssh-keygen 失败（退出码 {}）：{}", out.code, out.combined())));
+        return Err(AppError::Config(crate::tr!("ssh-keygen 失败（退出码 {0}）：{1}", "ssh-keygen failed (exit code {0}): {1}", out.code, out.combined())));
     }
-    Ok(StepLog { ok: true, message: format!("已生成新密钥：{}", key_path.display()) })
+    Ok(StepLog { ok: true, message: crate::tr!("已生成新密钥：{0}", "New key generated: {0}", key_path.display()) })
 }
 
 /// 读取公钥文本（供界面展示与复制）。
@@ -355,7 +362,7 @@ pub fn read_public_key(key_path: &Path) -> AppResult<String> {
     let pub_path = PathBuf::from(format!("{}.pub", key_path.display()));
     std::fs::read_to_string(&pub_path)
         .map(|s| s.trim().to_string())
-        .map_err(|_| AppError::Config(format!("公钥不存在：{}", pub_path.display())))
+        .map_err(|_| AppError::Config(crate::tr!("公钥不存在：{0}", "Public key not found: {0}", pub_path.display())))
 }
 
 #[cfg(test)]
@@ -493,6 +500,7 @@ mod tests {
             category: "c".into(),
             source: Source::Config,
             kind: Kind::Config,
+            name_en: None,
             provider: None,
             path: None,
             archive: None,
@@ -507,6 +515,7 @@ mod tests {
             env: None,
             verify: vec![],
             note: None,
+            note_en: None,
             expect_version: None,
         };
         let r = run_actions(&item, None, &Params::default());

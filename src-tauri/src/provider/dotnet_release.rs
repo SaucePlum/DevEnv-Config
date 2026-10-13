@@ -119,7 +119,7 @@ impl VersionProvider for DotnetReleaseProvider {
         let list = parse_index(&body, prefer)?;
         // 索引结构变化时宁可报错，也不要静默给出空列表
         if list.is_empty() {
-            return Err(ProviderError::Index("没有解析到仍受支持的 .NET 版本线".into()));
+            return Err(ProviderError::Index(crate::tr!("没有解析到仍受支持的 .NET 版本线", "No still-supported .NET release line parsed")));
         }
         Ok(list)
     }

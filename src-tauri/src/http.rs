@@ -2,14 +2,30 @@
 
 use std::time::Duration;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum HttpError {
-    #[error("请求失败: {0}")]
-    Request(#[from] reqwest::Error),
-    #[error("HTTP {status}: {url}")]
+    Request(reqwest::Error),
     Status { status: u16, url: String },
-    #[error("请求超时（60 秒）: {url}")]
     Timeout { url: String },
+}
+
+impl std::fmt::Display for HttpError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use crate::tr;
+        match self {
+            HttpError::Request(e) => write!(f, "{}", tr!("请求失败: {0}", "Request failed: {0}", e)),
+            HttpError::Status { status, url } => write!(f, "HTTP {status}: {url}"),
+            HttpError::Timeout { url } => write!(f, "{}", tr!("请求超时（60 秒）: {0}", "Request timed out (60s): {0}", url)),
+        }
+    }
+}
+
+impl std::error::Error for HttpError {}
+
+impl From<reqwest::Error> for HttpError {
+    fn from(e: reqwest::Error) -> Self {
+        HttpError::Request(e)
+    }
 }
 
 /// 此客户端不设总超时，供 download 模块流式复用；文本请求的超时在 `get_text` 内设置。

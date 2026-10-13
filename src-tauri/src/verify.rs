@@ -25,7 +25,7 @@ pub fn commands_for(item: &Item, params: &Params) -> Vec<Vec<String>> {
 pub fn run_verify(item: &Item, params: &Params, extra_dirs: &[std::path::PathBuf]) -> VerifyOutcome {
     let cmds = commands_for(item, params);
     if cmds.is_empty() {
-        return VerifyOutcome { ok: true, code: 0, output: "无验证命令".into(), command: String::new() };
+        return VerifyOutcome { ok: true, code: 0, output: crate::tr!("无验证命令", "No verification command"), command: String::new() };
     }
     let mut last = VerifyOutcome { ok: true, code: 0, output: String::new(), command: String::new() };
     for cmd in cmds {

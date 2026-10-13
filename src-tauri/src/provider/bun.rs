@@ -77,7 +77,7 @@ impl VersionProvider for BunProvider {
         let list = parse_releases(&body, prefer)?;
         // 列表结构变化时宁可报错，也不要静默给出空列表
         if list.is_empty() {
-            return Err(ProviderError::Index("没有解析到可用的 Bun 版本".into()));
+            return Err(ProviderError::Index(crate::tr!("没有解析到可用的 Bun 版本", "No usable Bun version parsed")));
         }
         Ok(list)
     }

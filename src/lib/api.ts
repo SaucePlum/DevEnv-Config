@@ -28,6 +28,7 @@ export const api = {
   cacheSizeMb: () => invoke<number>("cache_size_mb"),
   openUrl: (url: string) => invoke<void>("open_url", { url }),
   testSsh: () => invoke<string>("test_ssh"),
+  setLanguage: (lang: string) => invoke<void>("set_language", { lang }),
 };
 
 export function onItemState(cb: (e: ItemEvent) => void) {

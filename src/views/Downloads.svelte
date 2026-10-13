@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { api } from "../lib/api";
   import { store } from "../lib/store.svelte";
+  import { t } from "../lib/i18n.svelte";
   import AppButton from "../lib/components/AppButton.svelte";
   import { askConfirm } from "../lib/confirm.svelte";
 
@@ -23,7 +24,7 @@
   }
 
   async function del(name: string) {
-    if (!(await askConfirm(`删除 ${name}？下次安装同一版本时会重新下载。`, { danger: true }))) return;
+    if (!(await askConfirm(t("downloads.delete_confirm", { name }), { danger: true }))) return;
     busy = true;
     try { await api.deleteCacheEntry(name); await refresh(); }
     finally { busy = false; }
@@ -31,7 +32,7 @@
 
   async function clearAll() {
     if (!entries.length) return;
-    if (!(await askConfirm(`清空全部 ${entries.length} 个缓存文件？下次安装需要重新下载。`, { danger: true }))) return;
+    if (!(await askConfirm(t("downloads.clear_confirm", { n: entries.length }), { danger: true }))) return;
     busy = true;
     try { await api.clearCache(); await refresh(); }
     finally { busy = false; }
@@ -41,21 +42,21 @@
 </script>
 
 <div class="toolbar">
-  <h1>下载管理</h1>
+  <h1>{t("downloads.title")}</h1>
   <div class="stats">
-    <span class="stat">文件 <b class="mono">{entries.length}</b></span>
-    <span class="stat">占用 <b class="mono">{totalMb.toFixed(1)} MB</b></span>
+    <span class="stat">{t("downloads.files")} <b class="mono">{entries.length}</b></span>
+    <span class="stat">{t("downloads.usage")} <b class="mono">{totalMb.toFixed(1)} MB</b></span>
   </div>
   <div class="tb-actions">
-    <AppButton size="sm" onclick={() => api.openCacheDir().catch((e) => alert(String(e)))}>打开缓存目录</AppButton>
-    <AppButton size="sm" onclick={refresh} disabled={busy}>刷新</AppButton>
-    <AppButton size="sm" variant="danger" onclick={clearAll} disabled={busy || !entries.length}>清空全部</AppButton>
+    <AppButton size="sm" onclick={() => api.openCacheDir().catch((e) => alert(String(e)))}>{t("downloads.open_cache")}</AppButton>
+    <AppButton size="sm" onclick={refresh} disabled={busy}>{t("common.refresh")}</AppButton>
+    <AppButton size="sm" variant="danger" onclick={clearAll} disabled={busy || !entries.length}>{t("downloads.clear_all")}</AppButton>
   </div>
 </div>
 
 <div class="group">
   <div class="group-head">
-    <h2>已缓存的安装包</h2>
+    <h2>{t("downloads.cached")}</h2>
     <span class="badge mono">{entries.length}</span>
     <span class="grow"></span>
   </div>
@@ -66,13 +67,13 @@
         <span class="mono" style="color:var(--text-3)">{fmtSize(e.size)}</span>
         <span class="mono" style="color:var(--text-3)">{e.modified}</span>
         <div style="display:flex;justify-content:flex-end">
-          <AppButton size="sm" variant="danger" onclick={() => del(e.name)} disabled={busy}>删除</AppButton>
+          <AppButton size="sm" variant="danger" onclick={() => del(e.name)} disabled={busy}>{t("common.delete")}</AppButton>
         </div>
       </div>
     {/each}
     {#if !entries.length}
       <div class="row" style="grid-template-columns:1fr">
-        <span style="color:var(--text-3)">缓存是空的</span>
+        <span style="color:var(--text-3)">{t("downloads.empty")}</span>
       </div>
     {/if}
   </div>

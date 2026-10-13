@@ -32,6 +32,9 @@ pub struct ItemView {
     pub version: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub detail: Option<String>,
+    /// 换源类条目的当前值（源地址），前端据此把镜像下拉框回填成真实状态
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mirror_current: Option<String>,
     pub needs_dir: bool,
     pub has_verify: bool,
     pub archive: Option<String>,
@@ -41,7 +44,7 @@ fn view(item: &Item) -> ItemView {
     let r = detect::detect_item(item);
     ItemView {
         id: item.id.clone(),
-        name: item.name.clone(),
+        name: item.display_name(),
         category: item.category.clone(),
         source: match item.source {
             crate::manifest::Source::Online => "online",
@@ -55,12 +58,18 @@ fn view(item: &Item) -> ItemView {
             crate::manifest::Kind::Config => "config",
         }
         .into(),
-        note: item.note.clone(),
+        note: item.display_note(),
         requires: item.requires.clone(),
-        mirrors: item.mirrors.clone(),
+        // 镜像源名按当前语言返回，前端直接展示 name 即可
+        mirrors: item
+            .mirrors
+            .iter()
+            .map(|m| Mirror { name: m.display_name(), name_en: None, url: m.url.clone() })
+            .collect(),
         status: r.status,
         version: r.version,
         detail: r.detail,
+        mirror_current: r.mirror_current,
         needs_dir: item.needs_install_dir(),
         has_verify: !item.verify.is_empty(),
         archive: item.archive.map(|a| match a {
@@ -80,7 +89,7 @@ pub async fn list_items(state: State<'_, AppState>) -> Result<Vec<ItemView>, App
 
 #[tauri::command]
 pub async fn list_versions(state: State<'_, AppState>, id: String) -> Result<Vec<VersionInfo>, AppError> {
-    let item = state.manifest.get(&id).cloned().ok_or_else(|| AppError::Other(format!("未知条目 {id}")))?;
+    let item = state.manifest.get(&id).cloned().ok_or_else(|| AppError::Other(crate::tr!("未知条目 {0}", "Unknown item {0}", id)))?;
     provider::list_versions(&item).await.map_err(|e| AppError::Provider(e.to_string()))
 }
 
@@ -104,7 +113,7 @@ pub fn is_elevated() -> bool {
 /// 读取某配置条目的表单默认值。同步子进程调用被移到阻塞线程，避免卡住主线程。
 #[tauri::command]
 pub async fn config_defaults(state: State<'_, AppState>, id: String) -> Result<HashMap<String, String>, AppError> {
-    state.manifest.get(&id).ok_or_else(|| AppError::Other(format!("未知条目 {id}")))?;
+    state.manifest.get(&id).ok_or_else(|| AppError::Other(crate::tr!("未知条目 {0}", "Unknown item {0}", id)))?;
     tauri::async_runtime::spawn_blocking(move || {
         let mut out = HashMap::new();
         if id == "git-identity" || id == "ssh-key" {
@@ -190,7 +199,7 @@ pub fn read_public_key(file: Option<String>) -> Result<String, AppError> {
         None | Some("") => "id_ed25519.pub".to_string(),
         Some(f) => {
             if f.contains('\\') || f.contains('/') || f.contains("..") || !f.to_lowercase().ends_with(".pub") {
-                return Err(AppError::Config("非法的密钥文件名".into()));
+                return Err(AppError::Config(crate::tr!("非法的密钥文件名", "Invalid key file name").into()));
             }
             f.to_string()
         }
@@ -198,7 +207,7 @@ pub fn read_public_key(file: Option<String>) -> Result<String, AppError> {
     let path = PathBuf::from(crate::env_norm::expand_env("%USERPROFILE%\\.ssh")).join(&name);
     std::fs::read_to_string(&path)
         .map(|s| s.trim().to_string())
-        .map_err(|_| AppError::Config(format!("公钥不存在：{}", path.display())))
+        .map_err(|_| AppError::Config(crate::tr!("公钥不存在：{0}", "Public key not found: {0}", path.display())))
 }
 
 #[tauri::command]
@@ -222,7 +231,7 @@ pub async fn open_url(url: String) -> Result<(), AppError> {
 pub async fn test_ssh() -> Result<String, AppError> {
     tauri::async_runtime::spawn_blocking(|| {
         let ssh = crate::proc::which("ssh", &[PathBuf::from("C:\\Windows\\System32\\OpenSSH")])
-            .ok_or_else(|| AppError::Config("找不到 ssh.exe，请先在「可选功能」中安装 OpenSSH 客户端".into()))?;
+            .ok_or_else(|| AppError::Config(crate::tr!("找不到 ssh.exe，请先在「可选功能」中安装 OpenSSH 客户端", "ssh.exe not found; install the OpenSSH Client from Windows optional features").into()))?;
         let out = crate::proc::run_capture(
             &ssh,
             &[
@@ -233,7 +242,7 @@ pub async fn test_ssh() -> Result<String, AppError> {
             ],
             std::time::Duration::from_secs(30),
         )?;
-        Ok(format!("退出码 {}\n{}", out.code, out.combined()))
+        Ok(crate::tr!("退出码 {0}\n{1}", "Exit code {0}\n{1}", out.code, out.combined()))
     })
     .await
     .map_err(|e| AppError::Other(e.to_string()))?
@@ -288,10 +297,10 @@ pub fn list_cache_entries() -> Result<Vec<CacheEntry>, AppError> {
 #[tauri::command]
 pub fn delete_cache_entry(name: String) -> Result<(), AppError> {
     if name.contains('\\') || name.contains('/') || name.contains("..") {
-        return Err(AppError::Config("非法的文件名".into()));
+        return Err(AppError::Config(crate::tr!("非法的文件名", "Invalid file name").into()));
     }
     let p = download::cache_dir().join(name);
-    std::fs::remove_file(&p).map_err(|e| AppError::Config(format!("删除失败: {e}")))
+    std::fs::remove_file(&p).map_err(|e| AppError::Config(crate::tr!("删除失败: {0}", "Delete failed: {0}", e)))
 }
 
 /// 清空全部下载缓存，返回删除的文件数。
@@ -317,7 +326,7 @@ pub fn open_cache_dir() -> Result<(), AppError> {
     std::process::Command::new("explorer")
         .arg(&dir)
         .spawn()
-        .map_err(|e| AppError::Config(format!("打开目录失败: {e}")))?;
+        .map_err(|e| AppError::Config(crate::tr!("打开目录失败: {0}", "Failed to open directory: {0}", e)))?;
     Ok(())
 }
 
@@ -325,6 +334,12 @@ pub fn open_cache_dir() -> Result<(), AppError> {
 #[tauri::command]
 pub fn app_version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
+}
+
+/// 切换界面语言（"zh" / "en"）。之后由后端生成的文案（软件名、备注、进度、日志、错误）随之切换。
+#[tauri::command]
+pub fn set_language(lang: String) {
+    crate::i18n::set_lang(&lang);
 }
 
 #[tauri::command]

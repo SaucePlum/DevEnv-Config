@@ -7,6 +7,7 @@ pub mod env;
 pub mod env_norm;
 pub mod error;
 pub mod http;
+pub mod i18n;
 pub mod installer;
 pub mod manifest;
 pub mod payload;
@@ -27,9 +28,9 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             if !installer::is_elevated() {
-                state::log(app.handle(), "warn", None, "当前不是管理员权限，安装与系统级环境变量写入可能失败");
+                state::log(app.handle(), "warn", None, crate::tr!("当前不是管理员权限，安装与系统级环境变量写入可能失败", "Not running as administrator; installation and system-level environment writes may fail"));
             }
-            let manifest = manifest::Manifest::load().map_err(|e| format!("清单加载失败: {e}"))?;
+            let manifest = manifest::Manifest::load().map_err(|e| crate::tr!("清单加载失败: {0}", "Manifest load failed: {0}", e))?;
             app.manage(commands::AppState { manifest });
             Ok(())
         })
@@ -57,6 +58,7 @@ pub fn run() {
             commands::cache_size_mb,
             commands::open_cache_dir,
             commands::app_version,
+            commands::set_language,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

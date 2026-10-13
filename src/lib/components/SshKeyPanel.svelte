@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { api } from "../api";
   import { portal } from "../portal";
+  import { t } from "../i18n.svelte";
   import AppButton from "./AppButton.svelte";
   import AppSelect from "./AppSelect.svelte";
   import { askConfirm } from "../confirm.svelte";
@@ -21,7 +22,7 @@
   const keyOptions = $derived(keys.map((k) => ({ value: k, label: keyName(k) })));
 
   const primaryLabel = $derived(
-    status.has_public ? "复制公钥" : status.has_private ? "重建公钥" : "生成 ed25519 密钥"
+    status.has_public ? t("ssh.copy_public") : status.has_private ? t("ssh.rebuild_public") : t("ssh.generate")
   );
 
   async function refreshStatus() {
@@ -56,8 +57,8 @@
       return;
     }
     const msg = status.has_private
-      ? "已存在 ed25519 私钥但缺少公钥文件，将从私钥重建公钥（不会改动私钥）。"
-      : "生成 ed25519 密钥？生成的私钥无口令保护；已有同名密钥会直接复用，不会覆盖。其他密钥（如 id_rsa）不受影响。";
+      ? t("ssh.rebuild_confirm")
+      : t("ssh.generate_confirm");
     if (!(await askConfirm(msg))) return;
     busy = true;
     try {
@@ -75,7 +76,7 @@
 
   async function test() {
     busy = true;
-    testOut = "正在测试…";
+    testOut = t("ssh.testing");
     try {
       testOut = await api.testSsh();
     } catch (e) {
@@ -87,34 +88,34 @@
 </script>
 
 <AppButton size="sm" onclick={primary} disabled={busy}>{primaryLabel}</AppButton>
-<AppButton size="sm" onclick={loadSelected} disabled={!selected}>查看密钥</AppButton>
+<AppButton size="sm" onclick={loadSelected} disabled={!selected}>{t("ssh.view_key")}</AppButton>
 
 {#if open}
   <div class="scrim" use:portal>
     <div class="modal">
-      <div class="modal-head"><h3>SSH 公钥</h3><span class="grow"></span>
-        <button class="icon-btn" onclick={() => (open = false)} title="关闭">
+      <div class="modal-head"><h3>{t("ssh.public_key")}</h3><span class="grow"></span>
+        <button class="icon-btn" onclick={() => (open = false)} title={t("common.close")}>
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4l8 8M12 4l-8 8" /></svg>
         </button>
       </div>
       <div class="modal-body">
         <div style="font-size:12px;color:var(--text-3);margin-bottom:6px">
-          私钥无口令保护；生成时已有同名密钥则复用，不会覆盖。行上的下拉框也可以切换查看。
+          {t("ssh.hint")}
         </div>
         {#if keyOptions.length}
           <AppSelect options={keyOptions} bind:value={selected} width="100%" onselect={loadSelected} />
         {:else}
-          <div class="mono" style="color:var(--text-3)">~/.ssh 下暂无 .pub 公钥</div>
+          <div class="mono" style="color:var(--text-3)">{t("ssh.no_pub")}</div>
         {/if}
         <textarea class="field" style="height:120px;width:100%;margin-top:8px" readonly bind:value={pubkey}></textarea>
         <div style="display:flex;gap:8px;margin-top:10px">
-          <AppButton size="sm" onclick={async () => await api.copyText(pubkey)} disabled={!pubkey}>复制公钥</AppButton>
-          <AppButton size="sm" onclick={() => api.openUrl("https://github.com/settings/ssh/new")}>打开 GitHub 设置页</AppButton>
-          <AppButton size="sm" onclick={test} disabled={busy}>测试连接</AppButton>
+          <AppButton size="sm" onclick={async () => await api.copyText(pubkey)} disabled={!pubkey}>{t("ssh.copy_public")}</AppButton>
+          <AppButton size="sm" onclick={() => api.openUrl("https://github.com/settings/ssh/new")}>{t("ssh.open_github")}</AppButton>
+          <AppButton size="sm" onclick={test} disabled={busy}>{t("ssh.test")}</AppButton>
         </div>
         {#if testOut}<pre class="mono" style="white-space:pre-wrap;margin-top:10px;font-size:12px">{testOut}</pre>{/if}
       </div>
-      <div class="modal-foot"><AppButton onclick={() => (open = false)}>关闭</AppButton></div>
+      <div class="modal-foot"><AppButton onclick={() => (open = false)}>{t("common.close")}</AppButton></div>
     </div>
   </div>
 {/if}

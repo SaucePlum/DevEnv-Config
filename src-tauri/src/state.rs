@@ -116,28 +116,28 @@ pub fn log(app: &AppHandle, level: &str, item: Option<&str>, message: impl Into<
 
 /// 安装 / 投放入口。`version` 为空表示固定项（VC、VS）或内置项。
 pub async fn start_item(app: AppHandle, manifest: Manifest, id: String, version: Option<String>, params: Params) -> AppResult<()> {
-    let item = manifest.get(&id).cloned().ok_or_else(|| AppError::Other(format!("未知条目 {id}")))?;
+    let item = manifest.get(&id).cloned().ok_or_else(|| AppError::Other(crate::tr!("未知条目 {0}", "Unknown item {0}", id)))?;
 
     if item.kind == Kind::Config {
-        return Err(AppError::Other("配置项请走 run_config".into()));
+        return Err(AppError::Other(crate::tr!("配置项请走 run_config", "Config items must go through run_config").into()));
     }
 
     // 1. 取到安装包 / 压缩包路径
-    emit_state(&app, &id, Phase::Downloading, "准备资源", Some(0.02));
+    emit_state(&app, &id, Phase::Downloading, crate::tr!("准备资源", "Preparing resources"), Some(0.02));
     let mut downloaded: Vec<PathBuf> = Vec::new();
     let local_path: PathBuf = match item.source {
         Source::Local => {
             let p = payload::resolve_local(&app, item.path.as_deref().ok_or_else(|| AppError::MissingResource(id.clone()))?)?;
-            log(&app, "info", Some(&id), format!("使用内置资源 {}", p.display()));
+            log(&app, "info", Some(&id), crate::tr!("使用内置资源 {0}", "Using bundled resource {0}", p.display()));
             p
         }
         Source::Online => {
-            let ver = version.clone().unwrap_or_else(|| "最新".into());
+            let ver = version.clone().unwrap_or_else(|| crate::tr!("最新", "latest"));
             let targets = provider::resolve(&item, &ver).await.map_err(|e| AppError::Provider(e.to_string()))?;
             for t in &targets {
-                log(&app, "info", Some(&id), format!("下载 {}", t.file_name));
+                log(&app, "info", Some(&id), crate::tr!("下载 {0}", "Downloading {0}", t.file_name));
                 for (i, u) in t.urls.iter().enumerate() {
-                    log(&app, "debug", Some(&id), format!("  候选地址 {}: {u}", i + 1));
+                    log(&app, "debug", Some(&id), crate::tr!("  候选地址 {0}: {1}", "  Candidate URL {0}: {1}", i + 1, u));
                 }
                 let aid = id.clone();
                 let app2 = app.clone();
@@ -154,37 +154,37 @@ pub async fn start_item(app: AppHandle, manifest: Manifest, id: String, version:
                     }
                     last_ms.store(now, Ordering::Relaxed);
                     let p = total.map(|t| done as f64 / t as f64);
-                    emit_state(&app2, &aid, Phase::Downloading, "下载中", p);
+                    emit_state(&app2, &aid, Phase::Downloading, crate::tr!("下载中", "Downloading"), p);
                 })
                 .await
                 .inspect_err(|e| emit_state(&app, &id, Phase::Failed, e.to_string(), None))?;
                 if report.reused_cache {
-                    log(&app, "info", Some(&id), "命中缓存，跳过下载");
+                    log(&app, "info", Some(&id), crate::tr!("命中缓存，跳过下载", "Cache hit, skipping download"));
                 }
-                emit_state(&app, &id, Phase::VerifyingHash, "校验文件", Some(0.9));
+                emit_state(&app, &id, Phase::VerifyingHash, crate::tr!("校验文件", "Verifying file"), Some(0.9));
                 downloaded.push(report.path);
             }
             downloaded
                 .last()
                 .cloned()
-                .ok_or_else(|| AppError::Download("没有可下载的文件".into()))?
+                .ok_or_else(|| AppError::Download(crate::tr!("没有可下载的文件", "No downloadable file").into()))?
         }
         Source::Config => unreachable!(),
     };
 
     match item.kind {
         Kind::Installer => {
-            emit_state(&app, &id, Phase::WaitingUser, "请在安装向导中完成安装", None);
+            emit_state(&app, &id, Phase::WaitingUser, crate::tr!("请在安装向导中完成安装", "Complete the installation in the setup wizard"), None);
             let path = local_path.clone();
             let app2 = app.clone();
             let id2 = id.clone();
             let code = tauri::async_runtime::spawn_blocking(move || installer::run_and_wait(&path, None))
                 .await
                 .map_err(|e| AppError::Other(e.to_string()))??;
-            log(&app2, "info", Some(&id2), format!("安装器退出码 {code}"));
-            emit_state_full(&app2, ItemEvent { id: id2.clone(), phase: Phase::WizardRunning, message: format!("安装器退出码 {code}"), progress: None, attempted: None, exit_code: Some(code) });
+            log(&app2, "info", Some(&id2), crate::tr!("安装器退出码 {0}", "Installer exit code {0}", code));
+            emit_state_full(&app2, ItemEvent { id: id2.clone(), phase: Phase::WizardRunning, message: crate::tr!("安装器退出码 {0}", "Installer exit code {0}", code), progress: None, attempted: None, exit_code: Some(code) });
             if code != 0 {
-                emit_state(&app2, &id2, Phase::Failed, format!("安装器退出码 {code}"), None);
+                emit_state(&app2, &id2, Phase::Failed, crate::tr!("安装器退出码 {0}", "Installer exit code {0}", code), None);
                 return Err(AppError::InstallerExit(code));
             }
             // 固定项可能对应多个安装包（VC 运行库有 x64 与 x86 两个），依次导向导。
@@ -194,16 +194,16 @@ pub async fn start_item(app: AppHandle, manifest: Manifest, id: String, version:
                     &app,
                     &id,
                     Phase::WaitingUser,
-                    format!("请在向导中完成 {} 的安装", p2.file_name().unwrap_or_default().to_string_lossy()),
+                    crate::tr!("请在向导中完成 {0} 的安装", "Complete the installation of {0} in the wizard", p2.file_name().unwrap_or_default().to_string_lossy()),
                     None,
                 );
                 let p3 = p2.clone();
                 let code2 = tauri::async_runtime::spawn_blocking(move || installer::run_and_wait(&p3, None))
                     .await
                     .map_err(|e| AppError::Other(e.to_string()))??;
-                log(&app, "info", Some(&id), format!("{} 安装器退出码 {code2}", p2.display()));
+                log(&app, "info", Some(&id), crate::tr!("{0} 安装器退出码 {1}", "{0} installer exit code {1}", p2.display(), code2));
                 if code2 != 0 {
-                    emit_state(&app, &id, Phase::Failed, format!("{} 退出码 {code2}", p2.display()), None);
+                    emit_state(&app, &id, Phase::Failed, crate::tr!("{0} 退出码 {1}", "{0} exit code {1}", p2.display(), code2), None);
                     return Err(AppError::InstallerExit(code2));
                 }
             }
@@ -212,15 +212,18 @@ pub async fn start_item(app: AppHandle, manifest: Manifest, id: String, version:
             let install_dir = params
                 .install_dir
                 .clone()
-                .ok_or_else(|| AppError::Config("免安装类需要提供安装目录".into()))?;
+                .ok_or_else(|| AppError::Config(crate::tr!("免安装类需要提供安装目录", "A portable item requires an install directory").into()))?;
             let dir = PathBuf::from(&install_dir);
             let archive = local_path.clone();
             let app2 = app.clone();
             let id2 = id.clone();
-            emit_state(&app2, &id2, Phase::Extracting, "解压中", Some(0.1));
+            emit_state(&app2, &id2, Phase::Extracting, crate::tr!("解压中", "Extracting"), Some(0.1));
             tauri::async_runtime::spawn_blocking(move || {
-                deploy::deploy_archive(&archive, &dir, &id2, &|msg, p| {
-                    let phase = if msg.contains("移动") { Phase::Moving } else { Phase::Extracting };
+                deploy::deploy_archive(&archive, &dir, &id2, &|stage, msg, p| {
+                    let phase = match stage {
+                        deploy::DeployStage::Moving => Phase::Moving,
+                        _ => Phase::Extracting,
+                    };
                     emit_state(&app2, &id2, phase, msg, p);
                 })
             })
@@ -231,23 +234,23 @@ pub async fn start_item(app: AppHandle, manifest: Manifest, id: String, version:
     }
 
     // 2. 收尾：环境变量
-    emit_state(&app, &id, Phase::Finalizing, "配置环境变量", Some(0.95));
+    emit_state(&app, &id, Phase::Finalizing, crate::tr!("配置环境变量", "Configuring environment variables"), Some(0.95));
     finalize_env(&app, &item, &params)?;
 
     // 3. 验证
-    emit_state(&app, &id, Phase::Verifying, "验证中", Some(0.98));
+    emit_state(&app, &id, Phase::Verifying, crate::tr!("验证中", "Verifying"), Some(0.98));
     let item2 = item.clone();
     let params2 = params.clone();
     let out = tauri::async_runtime::spawn_blocking(move || verify::run_verify(&item2, &params2, &[]))
         .await
         .map_err(|e| AppError::Other(e.to_string()))?;
     if out.ok {
-        log(&app, "info", Some(&id), format!("验证通过：{}", out.output.lines().next().unwrap_or("")));
-        emit_state(&app, &id, Phase::Done, "已完成", Some(1.0));
+        log(&app, "info", Some(&id), crate::tr!("验证通过：{0}", "Verification passed: {0}", out.output.lines().next().unwrap_or("")));
+        emit_state(&app, &id, Phase::Done, crate::tr!("已完成", "Completed"), Some(1.0));
         Ok(())
     } else {
-        log(&app, "warn", Some(&id), format!("验证未通过（退出码 {}）：{}", out.code, out.output));
-        emit_state(&app, &id, Phase::Failed, "验证未通过，可手动核对", Some(1.0));
+        log(&app, "warn", Some(&id), crate::tr!("验证未通过（退出码 {0}）：{1}", "Verification failed (exit code {0}): {1}", out.code, out.output));
+        emit_state(&app, &id, Phase::Failed, crate::tr!("验证未通过，可手动核对", "Verification failed; check manually"), Some(1.0));
         Err(AppError::Verify(out.output))
     }
 }
@@ -261,8 +264,8 @@ fn finalize_env(app: &AppHandle, item: &Item, params: &Params) -> AppResult<()> 
     for dir in &env_action.path_append {
         let d = params.fill(dir);
         match env::ensure_path_entry(Scope::System, &d)? {
-            env::PathWrite::Skipped => log(app, "info", Some(&item.id), format!("PATH 已由安装器配置，跳过：{d}")),
-            env::PathWrite::Appended => log(app, "info", Some(&item.id), format!("PATH 已追加：{d}")),
+            env::PathWrite::Skipped => log(app, "info", Some(&item.id), crate::tr!("PATH 已由安装器配置，跳过：{0}", "PATH already configured by installer, skipping: {0}", d)),
+            env::PathWrite::Appended => log(app, "info", Some(&item.id), crate::tr!("PATH 已追加：{0}", "PATH appended: {0}", d)),
         }
     }
     for (k, v) in &env_action.set {
@@ -274,29 +277,29 @@ fn finalize_env(app: &AppHandle, item: &Item, params: &Params) -> AppResult<()> 
 
 /// 执行配置项：先检查依赖，再备份、执行动作、复查。
 pub async fn run_config(app: AppHandle, manifest: Manifest, id: String, mirror_url: Option<String>, params: Params) -> AppResult<Vec<config::StepLog>> {
-    let item = manifest.get(&id).cloned().ok_or_else(|| AppError::Other(format!("未知配置项 {id}")))?;
+    let item = manifest.get(&id).cloned().ok_or_else(|| AppError::Other(crate::tr!("未知配置项 {0}", "Unknown config item {0}", id)))?;
     if item.kind != Kind::Config {
-        return Err(AppError::Other(format!("{id} 不是配置项")));
+        return Err(AppError::Other(crate::tr!("{0} 不是配置项", "{0} is not a config item", id)));
     }
 
     // 依赖检查
     for dep in &item.requires {
-        let dep_item = manifest.get(dep).ok_or_else(|| AppError::Other(format!("缺少依赖项 {dep}")))?;
+        let dep_item = manifest.get(dep).ok_or_else(|| AppError::Other(crate::tr!("缺少依赖项 {0}", "Missing dependency {0}", dep)))?;
         let r = detect::detect_item(dep_item);
         if !matches!(r.status, detect::DetectStatus::Installed | detect::DetectStatus::Configured) {
-            let msg = format!("需先安装 {}", dep_item.name);
+            let msg = crate::tr!("需先安装 {0}", "Please install {0} first", dep_item.display_name());
             emit_state(&app, &id, Phase::Failed, &msg, None);
             return Err(AppError::Config(msg));
         }
     }
 
-    emit_state(&app, &id, Phase::NotConfigured, "备份并执行", Some(0.2));
-    let path = env::backup_env(&format!("{}（配置前）", item.name))?;
-    log(&app, "info", Some(&id), format!("已备份环境变量：{}", path.display()));
+    emit_state(&app, &id, Phase::NotConfigured, crate::tr!("备份并执行", "Backing up and running"), Some(0.2));
+    let path = env::backup_env(&crate::tr!("{0}（配置前）", "{0} (before configure)", item.display_name()))?;
+    log(&app, "info", Some(&id), crate::tr!("已备份环境变量：{0}", "Environment variables backed up: {0}", path.display()));
 
     let item2 = item.clone();
     let params2 = params.clone();
-    emit_finalizing(&app, &id, "开始执行配置动作", 0.4);
+    emit_finalizing(&app, &id, &crate::tr!("开始执行配置动作", "Running configuration actions"), 0.4);
     let logs = tauri::async_runtime::spawn_blocking(move || config::run_actions(&item2, mirror_url.as_deref(), &params2))
         .await
         .map_err(|e| AppError::Other(e.to_string()))??;
@@ -305,15 +308,15 @@ pub async fn run_config(app: AppHandle, manifest: Manifest, id: String, mirror_u
         log(&app, if l.ok { "info" } else { "warn" }, Some(&id), l.message.clone());
     }
 
-    emit_state(&app, &id, Phase::Verifying, "复查中", Some(0.9));
+    emit_state(&app, &id, Phase::Verifying, crate::tr!("复查中", "Re-checking"), Some(0.9));
     let item3 = item.clone();
     let out = tauri::async_runtime::spawn_blocking(move || detect::detect_item(&item3))
         .await
         .map_err(|e| AppError::Other(e.to_string()))?;
     if out.status == detect::DetectStatus::Configured {
-        emit_state(&app, &id, Phase::Configured, "已配置", Some(1.0));
+        emit_state(&app, &id, Phase::Configured, crate::tr!("已配置", "Configured"), Some(1.0));
     } else {
-        emit_state(&app, &id, Phase::NotConfigured, "执行完成，但复查未确认", Some(1.0));
+        emit_state(&app, &id, Phase::NotConfigured, crate::tr!("执行完成，但复查未确认", "Completed, but re-check did not confirm"), Some(1.0));
     }
     Ok(logs)
 }

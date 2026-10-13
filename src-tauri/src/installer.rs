@@ -52,21 +52,22 @@ pub fn run_and_wait(file: &Path, params: Option<&str>) -> AppResult<i32> {
 
     unsafe {
         ShellExecuteExW(&mut sei)
-            .map_err(|e| AppError::Command(format!("无法启动 {}: {e}", file.display())))?;
+            .map_err(|e| AppError::Command(crate::tr!("无法启动 {0}: {1}", "Failed to launch {0}: {1}", file.display(), e)))?;
         if sei.hProcess.is_invalid() {
-            return Err(AppError::Command(format!("未取得进程句柄: {}", file.display())));
+            return Err(AppError::Command(crate::tr!("未取得进程句柄: {0}", "Failed to obtain process handle: {0}", file.display())));
         }
         let wait = WaitForSingleObject(sei.hProcess, INFINITE);
         if wait != windows::Win32::Foundation::WAIT_OBJECT_0 {
-            return Err(AppError::Command(format!(
-                "等待 {} 退出失败（WAIT 状态 {}）",
+            return Err(AppError::Command(crate::tr!(
+                "等待 {0} 退出失败（WAIT 状态 {1}）",
+                "Failed waiting for {0} to exit (WAIT status {1})",
                 file.display(),
                 wait.0
             )));
         }
         let mut code: u32 = 0;
         GetExitCodeProcess(sei.hProcess, &mut code)
-            .map_err(|e| AppError::Command(format!("读取退出码失败: {e}")))?;
+            .map_err(|e| AppError::Command(crate::tr!("读取退出码失败: {0}", "Failed to read exit code: {0}", e)))?;
         let _ = CloseHandle(sei.hProcess);
         Ok(code as i32)
     }
@@ -81,7 +82,7 @@ pub fn open_externally(target: &str) -> AppResult<()> {
     use windows::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
 
     if !target.starts_with("https://") {
-        return Err(AppError::Config("只允许打开 https 地址".into()));
+        return Err(AppError::Config(crate::tr!("只允许打开 https 地址", "Only https URLs are allowed").into()));
     }
 
     // 与 run_and_wait 相同：ShellExecuteExW 可能委托 shell 扩展，先确保 COM 已初始化。
@@ -101,7 +102,7 @@ pub fn open_externally(target: &str) -> AppResult<()> {
     };
     unsafe {
         ShellExecuteExW(&mut sei)
-            .map_err(|e| AppError::Command(format!("无法打开 {target}: {e}")))?;
+            .map_err(|e| AppError::Command(crate::tr!("无法打开 {0}: {1}", "Failed to open {0}: {1}", target, e)))?;
     }
     Ok(())
 }
