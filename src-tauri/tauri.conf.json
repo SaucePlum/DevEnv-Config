@@ -1,0 +1,37 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "开发环境快速配置助手",
+  "version": "1.0.0",
+  "identifier": "com.dev-env.assistant",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "开发环境快速配置助手",
+        "width": 1180,
+        "height": 760,
+        "minWidth": 960,
+        "minHeight": 620,
+        "center": true,
+        "resizable": true,
+        "decorations": false,
+        "shadow": true
+      }
+    ],
+    "security": { "csp": null }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/icon.ico"],
+    "resources": ["resources/manifest.toml", "resources/payload/**/*"],
+    "windows": {
+      "nsis": { "installMode": "currentUser", "compression": "lzma" }
+    }
+  }
+}

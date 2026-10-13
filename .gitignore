@@ -1,0 +1,15 @@
+# 依赖与构建产物
+node_modules/
+dist/
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# 内置资源（体积大，由 sync-resources.ps1 从 H:\环境 生成）
+src-tauri/resources/payload/
+
+# 本地环境
+.env
+.env.local
+*.log
+docs/
+scripts/
